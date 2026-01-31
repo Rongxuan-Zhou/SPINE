@@ -1,0 +1,19 @@
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+include = "\\.pyi?$"
+
+[tool.ruff]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+line-length = 88
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gpu: marks tests that require GPU",
+    "hardware: marks tests that require hardware",
+]
+testpaths = [
+    "tests",
+]

@@ -205,3 +205,43 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Robotics datasets and large artifacts
+data/
+data/kinematics/
+data/mimicgen/
+data/spine_dataset_*/
+data/spine_*.hdf5
+data/**/*.hdf5
+data/**/*.npy
+data/**/*.npz
+data/**/*.pt
+data/**/*.json
+data/**/*.csv
+data/**/*.pkl
+
+# ROS 2 / colcon build products
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+*.bag
+*.db3
+
+# Simulator caches / binaries
+*.mjb
+*.mjc
+
+# Local Python env variants (project-specific)
+.venv_*/
+.conda/
+
+# Training artifacts and logs
+checkpoints/
+wandb/
+logs/
+results/
+artifacts/
+train_*.log
+global_log.txt
+MUJOCO_LOG.TXT
+.write_test

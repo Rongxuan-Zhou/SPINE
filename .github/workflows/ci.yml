@@ -1,0 +1,59 @@
+name: SPINE CI
+
+on:
+  push:
+    branches:
+      - "main"
+      - "feature/*"
+      - "fix/*"
+      - "exp/*"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black mypy pytest
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
+      - name: Lint with Ruff & Black
+        run: |
+          ruff check .
+          black --check .
+
+      - name: Type Check with Mypy
+        run: |
+          mypy spine tools --ignore-missing-imports
+
+      - name: Run Unit Tests
+        run: |
+          pytest tests -m "not slow and not hardware and not gpu"
+
+      - name: Smoke Test (Import)
+        run: |
+          python -c "import spine; import tools; print('✅ Core modules importable')"
+
+      - name: Check for Large Files
+        run: |
+          find . -type f -size +50M -not -path "./.git/*" > large_files.txt
+          if [ -s large_files.txt ]; then
+            echo "❌ Error: Large files detected!"
+            cat large_files.txt
+            exit 1
+          fi
