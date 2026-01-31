@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from .configs import (
     AugmentationConfig,

@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 Array = np.ndarray
+ArrayLike = np.ndarray | float
 
 
 @dataclass
@@ -37,12 +38,12 @@ ContactFn = Callable[[Array], Tuple[float, Array]]
 DynamicsFn = Callable[[Array, Array], Array]
 
 
-def _softplus(x: Array) -> Array:
+def _softplus(x: ArrayLike) -> ArrayLike:
     # numerically stable softplus
     return np.log1p(np.exp(-np.abs(x))) + np.maximum(x, 0)
 
 
-def _sigmoid(x: Array) -> Array:
+def _sigmoid(x: ArrayLike) -> ArrayLike:
     return 1.0 / (1.0 + np.exp(-x))
 
 
