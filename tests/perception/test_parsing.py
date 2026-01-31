@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pytest
-
 import h5py
 
 from spine.perception.kinematics.parsing import (

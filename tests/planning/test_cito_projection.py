@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 
-import numpy as np
-
 from spine.planning.cito.projection import project_trajectory
 
 
