@@ -7,7 +7,6 @@ from spine.perception.kinematics import (
     DexCapAdapter,
     DexCapConfig,
     KinematicGenerator,
-    KinematicGeneratorConfig,
     R2R2RAdapter,
     R2R2RConfig,
 )
