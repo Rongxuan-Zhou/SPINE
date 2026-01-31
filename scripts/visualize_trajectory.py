@@ -19,7 +19,9 @@ def load_xyz(path: Path) -> tuple[list[float], list[float], list[float], list[fl
     xs, ys, zs = [], [], []
     for f in frames:
         pose: Sequence[float] = f["end_effector_pose"]
-        xs.append(pose[0]); ys.append(pose[1]); zs.append(pose[2])
+        xs.append(pose[0])
+        ys.append(pose[1])
+        zs.append(pose[2])
     return t, xs, ys, zs
 
 
@@ -28,7 +30,9 @@ def plot_trajectory(path: Path) -> None:
     fig = plt.figure(figsize=(7.5, 3.5))
     ax3d = fig.add_subplot(1, 2, 1, projection="3d")
     ax3d.plot(xs, ys, zs, label=path.name, lw=1.2, alpha=0.9)
-    ax3d.set_xlabel("x (m)"); ax3d.set_ylabel("y (m)"); ax3d.set_zlabel("z (m)")
+    ax3d.set_xlabel("x (m)")
+    ax3d.set_ylabel("y (m)")
+    ax3d.set_zlabel("z (m)")
     ax3d.legend(loc="upper left", fontsize=6, frameon=False)
     # flatten z spikes for readability
     ax3d.set_box_aspect([1, 1, 0.8])

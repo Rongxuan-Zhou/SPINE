@@ -10,11 +10,9 @@ import numpy as np
 
 from .configs import DexCapConfig
 from .data_structures import KinematicFrame, KinematicTrajectory, TrajectoryMetadata
-from .dependencies import require_dependency
 from .parsing import parse_dexcap_episode_frames
 from .sources import KinematicSourceAdapter
 from .augmentations import maybe_augment
-from .fr3_mapping import FR3_JOINT_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +130,7 @@ class DexCapAdapter(KinematicSourceAdapter):
                 from scipy.signal import savgol_filter  # type: ignore
 
                 # axis=0 handles vector rows
-                return savgol_filter(vals, kernel_length := kernel, polyorder=poly, axis=0, mode="nearest")
+                return savgol_filter(vals, kernel_length=kernel, polyorder=poly, axis=0, mode="nearest")
             except Exception:
                 pad = kernel // 2
                 padded = np.pad(vals, ((pad, pad), (0, 0)), mode="edge")

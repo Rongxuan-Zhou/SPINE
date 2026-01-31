@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Iterable, List, Sequence
+from typing import List, Sequence
 
 from .data_structures import KinematicTrajectory
 from .sources import KinematicSourceAdapter

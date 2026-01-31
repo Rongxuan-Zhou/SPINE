@@ -6,7 +6,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, MutableSequence, Sequence
+from typing import Iterable, List, Mapping, MutableSequence, Sequence
 
 from .data_structures import KinematicFrame, KinematicTrajectory, TrajectoryMetadata
 

@@ -4,8 +4,6 @@ target-version = ["py310"]
 include = "\\.pyi?$"
 
 [tool.ruff]
-select = ["E", "F", "W", "I"]
-ignore = ["E501", "I001"]
 line-length = 88
 exclude = [
     "external",
@@ -19,6 +17,10 @@ exclude = [
     ".venv",
     ".venv_*",
 ]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "I001"]
 per-file-ignores = {
     "tools/*.py" = ["E402", "F401", "F841"],
     "scripts/*.py" = ["E402", "F401", "F841"],
