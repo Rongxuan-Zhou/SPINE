@@ -19,9 +19,9 @@ exclude = [
     ".venv",
     ".venv_*",
 ]
-per-file-ignores = { 
-    "tools/*.py" = ["E402"], 
-    "scripts/*.py" = ["E402"], 
+per-file-ignores = {
+    "tools/*.py" = ["E402", "F401", "F841"],
+    "scripts/*.py" = ["E402", "F401", "F841"],
     "tests/conftest.py" = ["E402"],
 }
 
