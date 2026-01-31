@@ -7,7 +7,7 @@ import argparse
 
 macros.MUJOCO_GPU_RENDERING = False
 macros.MUJOCO_EGL = False
-macros.MUJOCO_GL = 'glfw'
+macros.MUJOCO_GL = "glfw"
 
 
 def rotmat_to_quat(mat):
@@ -70,19 +70,21 @@ def quat_to_axis_angle(q):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--hdf5', type=str, default='data/mimicgen/pick_place.hdf5')
-    ap.add_argument('--demo', type=str, default='demo_0')
-    ap.add_argument('--site', type=str, default='gripper0_grip_site')
-    ap.add_argument('--max-frames', type=int, default=200)
+    ap.add_argument("--hdf5", type=str, default="data/mimicgen/pick_place.hdf5")
+    ap.add_argument("--demo", type=str, default="demo_0")
+    ap.add_argument("--site", type=str, default="gripper0_grip_site")
+    ap.add_argument("--max-frames", type=int, default=200)
     args = ap.parse_args()
 
-    with h5py.File(args.hdf5,'r') as h:
-        obs = h['data'][args.demo]['obs']
-        jp = np.array(obs['robot0_joint_pos'])
-        eef_quat_h5 = np.array(obs['robot0_eef_quat'])
+    with h5py.File(args.hdf5, "r") as h:
+        obs = h["data"][args.demo]["obs"]
+        jp = np.array(obs["robot0_joint_pos"])
+        eef_quat_h5 = np.array(obs["robot0_eef_quat"])
     n = min(args.max_frames, jp.shape[0])
 
-    env = suite.make(env_name='Lift', robots='Panda', has_renderer=False, use_camera_obs=False)
+    env = suite.make(
+        env_name="Lift", robots="Panda", has_renderer=False, use_camera_obs=False
+    )
     env.reset()
     robot = env.robots[0]
     site_id = env.sim.model.site_name2id(args.site)
@@ -93,16 +95,19 @@ def main():
         env.sim.data.qpos[robot._ref_joint_pos_indexes] = jp[i]
         env.sim.data.qvel[robot._ref_joint_vel_indexes] = 0
         env.sim.forward()
-        mat = env.sim.data.site_xmat[site_id].reshape(3,3)
+        mat = env.sim.data.site_xmat[site_id].reshape(3, 3)
         quat_sim = rotmat_to_quat(mat)
         inv_sim = quat_conjugate(quat_sim)
         q_offset = quat_multiply(eef_quat_h5[i], inv_sim)
-        ang, axis = quat_to_axis_angle(q_offset/np.linalg.norm(q_offset))
+        ang, axis = quat_to_axis_angle(q_offset / np.linalg.norm(q_offset))
         angles.append(ang)
-        if i==0:
+        if i == 0:
             first_offset = q_offset
-    print(f"Frames analyzed: {n}, mean ang error: {np.mean(angles):.3f} rad, max: {np.max(angles):.3f} rad")
+    print(
+        f"Frames analyzed: {n}, mean ang error: {np.mean(angles):.3f} rad, max: {np.max(angles):.3f} rad"
+    )
     print("First frame offset wxyz:", first_offset)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

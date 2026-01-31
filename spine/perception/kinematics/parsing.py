@@ -28,7 +28,9 @@ def _as_floats(values: Iterable[object]) -> List[float]:
     return floats
 
 
-def _extract_first(mapping: Mapping[str, object], keys: Sequence[str], default: float | None = None) -> float:
+def _extract_first(
+    mapping: Mapping[str, object], keys: Sequence[str], default: float | None = None
+) -> float:
     for key in keys:
         if key in mapping:
             return float(mapping[key])  # type: ignore[arg-type]
@@ -42,7 +44,9 @@ def _extract_pose(mapping: Mapping[str, object]) -> List[float]:
         if key in mapping:
             pose = mapping[key]
             return _as_floats(pose if isinstance(pose, Sequence) else [])
-    raise KeyError("未找到末端位姿字段 (end_effector_pose / ee_pose / pose / world_pose)")
+    raise KeyError(
+        "未找到末端位姿字段 (end_effector_pose / ee_pose / pose / world_pose)"
+    )
 
 
 def _extract_joint_positions(mapping: Mapping[str, object]) -> List[float]:
@@ -53,7 +57,9 @@ def _extract_joint_positions(mapping: Mapping[str, object]) -> List[float]:
     return []
 
 
-def parse_trajectory_json(path: Path, metadata: TrajectoryMetadata) -> KinematicTrajectory:
+def parse_trajectory_json(
+    path: Path, metadata: TrajectoryMetadata
+) -> KinematicTrajectory:
     """Parses a generic JSON trajectory with frames list."""
     payload = _read_json(path)
     frames_payload = payload.get("frames") or payload.get("trajectory")
@@ -66,11 +72,17 @@ def parse_trajectory_json(path: Path, metadata: TrajectoryMetadata) -> Kinematic
         timestamp = _extract_first(frame_entry, ("timestamp", "time", "t"))
         ee_pose = _extract_pose(frame_entry)
         joints = _extract_joint_positions(frame_entry)
-        frames.append(KinematicFrame(timestamp=timestamp, joint_positions=joints, end_effector_pose=ee_pose))
+        frames.append(
+            KinematicFrame(
+                timestamp=timestamp, joint_positions=joints, end_effector_pose=ee_pose
+            )
+        )
     return KinematicTrajectory(frames=frames, metadata=metadata)
 
 
-def discover_json_trajectories(root: Path, clip_filter: Sequence[str] | None = None) -> List[Path]:
+def discover_json_trajectories(
+    root: Path, clip_filter: Sequence[str] | None = None
+) -> List[Path]:
     """Find candidate JSON trajectory files under a root, applying optional clip filters."""
     all_json = sorted(root.rglob("*.json"))
     if not clip_filter:
@@ -90,7 +102,11 @@ def parse_dexcap_episode_frames(
     frame_dt: float = 0.033,
 ) -> KinematicTrajectory:
     """Parse raw DexCap frame_* folders into a trajectory."""
-    frame_dirs = sorted(p for p in episode_dir.iterdir() if p.is_dir() and re.match(r"frame_\d+", p.name))
+    frame_dirs = sorted(
+        p
+        for p in episode_dir.iterdir()
+        if p.is_dir() and re.match(r"frame_\d+", p.name)
+    )
     frames: List[KinematicFrame] = []
     if not frame_dirs:
         raise FileNotFoundError(f"{episode_dir} 下未找到 frame_* 目录")
@@ -107,9 +123,17 @@ def parse_dexcap_episode_frames(
         if joint_file:
             joint_path = frame_dir / joint_file
             if joint_path.exists():
-                joint_positions = _as_floats(joint_path.read_text(encoding="utf-8").split())
+                joint_positions = _as_floats(
+                    joint_path.read_text(encoding="utf-8").split()
+                )
         timestamp = idx * frame_dt
-        frames.append(KinematicFrame(timestamp=timestamp, joint_positions=list(joint_positions), end_effector_pose=ee_pose))
+        frames.append(
+            KinematicFrame(
+                timestamp=timestamp,
+                joint_positions=list(joint_positions),
+                end_effector_pose=ee_pose,
+            )
+        )
     if not frames:
         raise FileNotFoundError(f"{episode_dir} 下未解析到任何帧")
     return KinematicTrajectory(frames=frames, metadata=metadata)

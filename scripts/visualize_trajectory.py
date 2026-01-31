@@ -51,10 +51,19 @@ def plot_trajectory(path: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Visualize kinematic trajectory JSON and save PNG.")
+    parser = argparse.ArgumentParser(
+        description="Visualize kinematic trajectory JSON and save PNG."
+    )
     parser.add_argument("paths", nargs="+", type=Path, help="Trajectory JSON paths")
-    parser.add_argument("--output_dir", type=Path, default=Path("results"), help="Directory to save PNGs")
-    parser.add_argument("--science", action="store_true", help="Use SciencePlots style if available.")
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        default=Path("results"),
+        help="Directory to save PNGs",
+    )
+    parser.add_argument(
+        "--science", action="store_true", help="Use SciencePlots style if available."
+    )
     args = parser.parse_args()
 
     if args.science:

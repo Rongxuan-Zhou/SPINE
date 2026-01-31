@@ -21,6 +21,7 @@ class InterpretableAttentionBlock(nn.Module):
     """
     Transformer block that returns attention map for interpretability.
     """
+
     def __init__(self, d_model, n_head, dropout=0.1):
         super().__init__()
         self.attn = nn.MultiheadAttention(d_model, n_head, batch_first=True)
@@ -48,6 +49,7 @@ class SpineDiT(nn.Module):
     Transformer diffusion backbone for SPINE.
     Tokens order: [Joint, Force, Action_0...Action_T]
     """
+
     def __init__(
         self,
         action_dim=9,

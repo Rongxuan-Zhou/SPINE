@@ -38,7 +38,9 @@ def build_adapters(config: KinematicGeneratorConfig):
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run kinematic generators and emit JSON trajectories.")
+    parser = argparse.ArgumentParser(
+        description="Run kinematic generators and emit JSON trajectories."
+    )
     parser.add_argument(
         "--config",
         type=Path,
@@ -63,7 +65,11 @@ def main() -> None:
     if not adapters:
         logger.warning("未配置任何数据源，直接退出")
         return
-    generator = KinematicGenerator(output_dir=cfg.output_dir, adapters=adapters, max_trajectories=cfg.max_trajectories)
+    generator = KinematicGenerator(
+        output_dir=cfg.output_dir,
+        adapters=adapters,
+        max_trajectories=cfg.max_trajectories,
+    )
     paths: List[Path] = generator.run()
     logger.info("生成完成，保存 %d 条轨迹到 %s", len(paths), cfg.output_dir)
 

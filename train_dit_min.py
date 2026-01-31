@@ -46,7 +46,9 @@ def main():
 
     model = SpineDiT(force_dim=1, horizon=horizon).to(device)
     optimizer = optim.AdamW(model.parameters(), lr=cfg["lr"], weight_decay=1e-4)
-    noise_scheduler = DDPMScheduler(num_train_timesteps=n_diffusion_steps, device=device)
+    noise_scheduler = DDPMScheduler(
+        num_train_timesteps=n_diffusion_steps, device=device
+    )
     loss_fn = nn.MSELoss()
 
     print(f"🚀 Start Training on {dataset_path}")

@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 # Optional styling (SciencePlots)
 try:
     import scienceplots  # noqa: F401
+
     plt.style.use(["science", "ieee"])
 except Exception:
     pass
@@ -41,7 +42,13 @@ def plot_beautified(
 
     # Left: Free Space (F_ext ~ 0 N)
     axes[0].plot(
-        x, prof_free, "o-", color="#1f77b4", linewidth=1.8, markersize=5, label="Attention $\\alpha_t$"
+        x,
+        prof_free,
+        "o-",
+        color="#1f77b4",
+        linewidth=1.8,
+        markersize=5,
+        label="Attention $\\alpha_t$",
     )
     axes[0].axhline(
         y=baseline, color="gray", linestyle=":", alpha=0.6, label="Chance Level (1/18)"
@@ -68,7 +75,13 @@ def plot_beautified(
 
     # Right: Hard Contact (F_ext ~ 5 N)
     axes[1].plot(
-        x, prof_contact, "o-", color="#d62728", linewidth=2.3, markersize=6, label="Attention $\\alpha_t$"
+        x,
+        prof_contact,
+        "o-",
+        color="#d62728",
+        linewidth=2.3,
+        markersize=6,
+        label="Attention $\\alpha_t$",
     )
     axes[1].axhline(
         y=baseline, color="gray", linestyle=":", alpha=0.6, label="Chance Level (1/18)"

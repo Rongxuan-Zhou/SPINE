@@ -68,7 +68,9 @@ def _so3_log(R: np.ndarray) -> np.ndarray:
     theta = math.acos(cos_theta)
     if theta < 1e-6:
         return np.zeros(3)
-    axis = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]]) / (2.0 * math.sin(theta))
+    axis = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]]) / (
+        2.0 * math.sin(theta)
+    )
     return axis * theta
 
 
@@ -108,7 +110,9 @@ def ik_solve(
     return q
 
 
-def retarget_episode(episode_dir: Path, mjcf: Path, output: Path, horizon: int | None = None) -> None:
+def retarget_episode(
+    episode_dir: Path, mjcf: Path, output: Path, horizon: int | None = None
+) -> None:
     model = mujoco.MjModel.from_xml_path(str(mjcf))
     siteid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "attachment_site")
     # Use keyframe "home" if present, else zeros.
@@ -117,7 +121,9 @@ def retarget_episode(episode_dir: Path, mjcf: Path, output: Path, horizon: int |
     else:
         q_home = np.zeros(model.nq)
 
-    frame_dirs = sorted([p for p in episode_dir.iterdir() if p.is_dir() and p.name.startswith("frame_")])
+    frame_dirs = sorted(
+        [p for p in episode_dir.iterdir() if p.is_dir() and p.name.startswith("frame_")]
+    )
     if horizon:
         frame_dirs = frame_dirs[:horizon]
     if not frame_dirs:
@@ -152,18 +158,37 @@ def retarget_episode(episode_dir: Path, mjcf: Path, output: Path, horizon: int |
             }
         )
 
-    payload = {"frames": frames_out, "source": "dexcap_fr3_ik", "clip": episode_dir.name}
+    payload = {
+        "frames": frames_out,
+        "source": "dexcap_fr3_ik",
+        "clip": episode_dir.name,
+    }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2))
     print(f"Saved {len(frames_out)} frames to {output}")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Retarget DexCap pose_3 matrices to FR3 joints via IK.")
-    parser.add_argument("episode_dir", type=Path, help="DexCap episode directory containing frame_* folders")
-    parser.add_argument("--mjcf", type=Path, required=True, help="FR3 MJCF path (e.g., menagerie fr3.xml)")
-    parser.add_argument("--output", type=Path, required=True, help="Output trajectory JSON path")
-    parser.add_argument("--horizon", type=int, default=None, help="Optional frame cap for quick tests")
+    parser = argparse.ArgumentParser(
+        description="Retarget DexCap pose_3 matrices to FR3 joints via IK."
+    )
+    parser.add_argument(
+        "episode_dir",
+        type=Path,
+        help="DexCap episode directory containing frame_* folders",
+    )
+    parser.add_argument(
+        "--mjcf",
+        type=Path,
+        required=True,
+        help="FR3 MJCF path (e.g., menagerie fr3.xml)",
+    )
+    parser.add_argument(
+        "--output", type=Path, required=True, help="Output trajectory JSON path"
+    )
+    parser.add_argument(
+        "--horizon", type=int, default=None, help="Optional frame cap for quick tests"
+    )
     args = parser.parse_args()
     retarget_episode(args.episode_dir, args.mjcf, args.output, args.horizon)
 

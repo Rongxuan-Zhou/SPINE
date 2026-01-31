@@ -6,7 +6,9 @@ import numpy as np
 from typing import Callable, Tuple
 
 
-def simple_point_mass_dynamics(dt: float) -> Callable[[np.ndarray, np.ndarray], np.ndarray]:
+def simple_point_mass_dynamics(
+    dt: float,
+) -> Callable[[np.ndarray, np.ndarray], np.ndarray]:
     """Returns a discrete-time point-mass dynamics function f(x, u) -> x_next.
 
     State: [x, v]; Control: [force]; mass=1 for simplicity.
@@ -22,7 +24,9 @@ def simple_point_mass_dynamics(dt: float) -> Callable[[np.ndarray, np.ndarray], 
     return step
 
 
-def planar_contact(boundary: float = 0.0) -> Callable[[np.ndarray], Tuple[float, np.ndarray]]:
+def planar_contact(
+    boundary: float = 0.0,
+) -> Callable[[np.ndarray], Tuple[float, np.ndarray]]:
     """Contact distance/normal for a 1D plane at x=boundary with outward normal +x."""
 
     def contact_fn(state: np.ndarray) -> Tuple[float, np.ndarray]:

@@ -27,7 +27,9 @@ def package_dataset(root: str, output: str, split: str = "train"):
     with h5py.File(output, "w") as h5f:
         data_grp = h5f.create_group("data")
         mask_grp = h5f.create_group("mask")
-        mask_train = mask_grp.create_dataset(split, shape=(len(bases),), dtype=h5py.string_dtype())
+        mask_train = mask_grp.create_dataset(
+            split, shape=(len(bases),), dtype=h5py.string_dtype()
+        )
 
         for idx, base in enumerate(bases):
             q_path = os.path.join(root, f"{base}_q_opt.npy")
@@ -41,7 +43,9 @@ def package_dataset(root: str, output: str, split: str = "train"):
             # 关节 (T, 9)
             obs_grp.create_dataset("joint_positions", data=q, compression="gzip")
             # 力 (T, 1) - 如需扩维到 3/6，可在此处修改
-            obs_grp.create_dataset("ee_forces", data=forces.reshape(-1, 1), compression="gzip")
+            obs_grp.create_dataset(
+                "ee_forces", data=forces.reshape(-1, 1), compression="gzip"
+            )
             # actions: 简单用下一帧的关节差分或直接下一帧关节。这里用下一帧关节 (末帧重复)
             actions = np.concatenate([q[1:], q[-1:]], axis=0)
             demo_grp.create_dataset("actions", data=actions, compression="gzip")
@@ -55,9 +59,16 @@ def main():
     parser = argparse.ArgumentParser(
         description="Package SPINE outputs into HDF5 (RoboMimic/RoboSuite style)."
     )
-    parser.add_argument("--root", type=str, required=True, help="Dataset root (e.g., data/spine_dataset_square)")
+    parser.add_argument(
+        "--root",
+        type=str,
+        required=True,
+        help="Dataset root (e.g., data/spine_dataset_square)",
+    )
     parser.add_argument("--output", type=str, required=True, help="Output HDF5 path")
-    parser.add_argument("--split", type=str, default="train", help="Mask split name (train/valid)")
+    parser.add_argument(
+        "--split", type=str, default="train", help="Mask split name (train/valid)"
+    )
     args = parser.parse_args()
 
     package_dataset(args.root, args.output, args.split)

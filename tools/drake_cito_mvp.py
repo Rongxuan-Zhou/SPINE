@@ -47,13 +47,26 @@ def build_diagram(model_path: str):
     return plant, scene_graph, diagram
 
 
-def compute_phi(plant: MultibodyPlant, scene_graph: SceneGraph, diagram, diagram_context, frame_name: str, q: np.ndarray, table_height: float, sd_threshold: float = 2.0) -> float:
+def compute_phi(
+    plant: MultibodyPlant,
+    scene_graph: SceneGraph,
+    diagram,
+    diagram_context,
+    frame_name: str,
+    q: np.ndarray,
+    table_height: float,
+    sd_threshold: float = 2.0,
+) -> float:
     """Signed distance using SceneGraph QueryObject; fallback to plane z-table_height."""
     plant_context = plant.GetMyContextFromRoot(diagram_context)
     scene_context = scene_graph.GetMyContextFromRoot(diagram_context)
     plant.SetPositions(plant_context, q)
     query_object = scene_graph.get_query_output_port().Eval(scene_context)
-    p_W = plant.GetFrameByName(frame_name).CalcPose(plant_context, plant.world_frame()).translation()
+    p_W = (
+        plant.GetFrameByName(frame_name)
+        .CalcPose(plant_context, plant.world_frame())
+        .translation()
+    )
     d_min = None
     try:
         distances = query_object.ComputeSignedDistanceToPoint(p_W, sd_threshold)
@@ -67,7 +80,9 @@ def compute_phi(plant: MultibodyPlant, scene_graph: SceneGraph, diagram, diagram
     return d_min
 
 
-def add_quasi_static_dynamics(prog, plant, q_ref, u, lam_n, lam_tx, lam_ty, contact_frames):
+def add_quasi_static_dynamics(
+    prog, plant, q_ref, u, lam_n, lam_tx, lam_ty, contact_frames
+):
     """Approximate static force balance at each step: g(q) = B u + sum J^T f."""
     nq = plant.num_positions()
     nv = plant.num_velocities()
@@ -121,14 +136,21 @@ def solve_cito(args):
     rho_comp = args.comp_penalty
 
     # Bounds
-    prog.AddBoundingBoxConstraint(plant.GetPositionLowerLimits(), plant.GetPositionUpperLimits(), q.flatten())
-    prog.AddBoundingBoxConstraint(plant.GetEffortLowerLimits(), plant.GetEffortUpperLimits(), u.flatten())
+    prog.AddBoundingBoxConstraint(
+        plant.GetPositionLowerLimits(), plant.GetPositionUpperLimits(), q.flatten()
+    )
+    prog.AddBoundingBoxConstraint(
+        plant.GetEffortLowerLimits(), plant.GetEffortUpperLimits(), u.flatten()
+    )
 
     for t in range(T):
         # Costs
         prog.AddQuadraticCost(w_track * np.sum((q[t] - q_ref[t]) ** 2))
         prog.AddQuadraticCost(w_u * np.sum(u[t] ** 2))
-        prog.AddQuadraticCost(w_lam * (np.sum(lam_n[t] ** 2) + np.sum(lam_tx[t] ** 2) + np.sum(lam_ty[t] ** 2)))
+        prog.AddQuadraticCost(
+            w_lam
+            * (np.sum(lam_n[t] ** 2) + np.sum(lam_tx[t] ** 2) + np.sum(lam_ty[t] ** 2))
+        )
         if t > 0:
             prog.AddQuadraticCost(w_smooth * np.sum((q[t] - q[t - 1]) ** 2))
 
@@ -140,19 +162,29 @@ def solve_cito(args):
                 diagram,
                 diagram_context,
                 frame_name,
-                q_ref[t],  # using q_ref for distance approx; replace with decision-variable eval + AutoDiff for full fidelity
+                q_ref[
+                    t
+                ],  # using q_ref for distance approx; replace with decision-variable eval + AutoDiff for full fidelity
                 args.table_height,
                 args.sd_threshold,
             )
             prog.AddConstraint(lam_n[t, i] >= 0)
-            prog.AddConstraint(phi >= 0)  # move to penalty if you allow small penetration
+            prog.AddConstraint(
+                phi >= 0
+            )  # move to penalty if you allow small penetration
             prog.AddConstraint(lam_n[t, i] * phi <= eps)
             if rho_comp > 0:
-                prog.AddQuadraticCost(rho_comp * (lam_n[t, i] * phi) ** 2)  # penalty version
+                prog.AddQuadraticCost(
+                    rho_comp * (lam_n[t, i] * phi) ** 2
+                )  # penalty version
             # Friction cone: ||ft|| <= mu * fn via Lorentz cone
-            prog.AddLorentzConeConstraint([mu * lam_n[t, i], lam_tx[t, i], lam_ty[t, i]])
+            prog.AddLorentzConeConstraint(
+                [mu * lam_n[t, i], lam_tx[t, i], lam_ty[t, i]]
+            )
 
-    add_quasi_static_dynamics(prog, plant, q_ref, u, lam_n, lam_tx, lam_ty, contact_frames)
+    add_quasi_static_dynamics(
+        prog, plant, q_ref, u, lam_n, lam_tx, lam_ty, contact_frames
+    )
 
     solver = SnoptSolver()
     result = solver.Solve(prog)
@@ -163,10 +195,20 @@ def solve_cito(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", required=True, help="Path to SDF/URDF containing robot+table.")
-    parser.add_argument("--q-ref", required=True, help="Path to npy (T,nq) reference positions (e.g., MimicGen).")
-    parser.add_argument("--time-steps", type=int, default=20, help="Number of steps to optimize.")
-    parser.add_argument("--table-height", type=float, default=0.0, help="Table z in world frame.")
+    parser.add_argument(
+        "--model", required=True, help="Path to SDF/URDF containing robot+table."
+    )
+    parser.add_argument(
+        "--q-ref",
+        required=True,
+        help="Path to npy (T,nq) reference positions (e.g., MimicGen).",
+    )
+    parser.add_argument(
+        "--time-steps", type=int, default=20, help="Number of steps to optimize."
+    )
+    parser.add_argument(
+        "--table-height", type=float, default=0.0, help="Table z in world frame."
+    )
     parser.add_argument("--mu", type=float, default=0.5, help="Friction coefficient.")
     parser.add_argument(
         "--contact-frames",

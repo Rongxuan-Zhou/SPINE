@@ -66,18 +66,34 @@ class CITOPlanner:
         controls = traj.controls.copy()
 
         for it in range(self.params.max_iters):
-            cost, max_pen = self._compute_cost(states, controls, target_states, dynamics_fn, contact_fn)
+            cost, max_pen = self._compute_cost(
+                states, controls, target_states, dynamics_fn, contact_fn
+            )
             costs.append(cost)
             max_pen_list.append(max_pen)
             logger.debug("iter=%d cost=%.4f max_pen=%.4f", it, cost, max_pen)
-            grad_states, grad_controls = self._compute_gradients(states, controls, target_states, dynamics_fn, contact_fn)
+            grad_states, grad_controls = self._compute_gradients(
+                states, controls, target_states, dynamics_fn, contact_fn
+            )
             # trust region on update magnitude
-            state_step = np.clip(-self.params.step_size * grad_states, -self.params.trust_region, self.params.trust_region)
-            control_step = np.clip(-self.params.step_size * grad_controls, -self.params.trust_region, self.params.trust_region)
+            state_step = np.clip(
+                -self.params.step_size * grad_states,
+                -self.params.trust_region,
+                self.params.trust_region,
+            )
+            control_step = np.clip(
+                -self.params.step_size * grad_controls,
+                -self.params.trust_region,
+                self.params.trust_region,
+            )
             states = states + state_step
             controls = controls + control_step
 
-        return CITOPlanResult(trajectory=Trajectory(states=states, controls=controls), costs=costs, penetrations=max_pen_list)
+        return CITOPlanResult(
+            trajectory=Trajectory(states=states, controls=controls),
+            costs=costs,
+            penetrations=max_pen_list,
+        )
 
     def _compute_cost(
         self,
@@ -144,7 +160,9 @@ class CITOPlanner:
                 )
                 states_eps_next = states.copy()
                 states_eps_next[t + 1, j] += eps
-                res_eps_next = self._dynamics_residual(states_eps_next, controls, dynamics_fn)
+                res_eps_next = self._dynamics_residual(
+                    states_eps_next, controls, dynamics_fn
+                )
                 grad_states[t + 1, j] += (
                     2
                     * self.params.dynamics_weight
@@ -155,12 +173,18 @@ class CITOPlanner:
         for i, s in enumerate(states):
             dist, normal = contact_fn(s)
             scaled = -dist / self.params.smoothing_length
-            coeff = self.params.contact_weight * _sigmoid(scaled) / self.params.smoothing_length
+            coeff = (
+                self.params.contact_weight
+                * _sigmoid(scaled)
+                / self.params.smoothing_length
+            )
             grad_states[i, : len(normal)] += -coeff * normal
         return grad_states, grad_controls
 
     @staticmethod
-    def _dynamics_residual(states: Array, controls: Array, dynamics_fn: DynamicsFn) -> Array:
+    def _dynamics_residual(
+        states: Array, controls: Array, dynamics_fn: DynamicsFn
+    ) -> Array:
         res = []
         for t in range(controls.shape[0]):
             pred_next = dynamics_fn(states[t], controls[t])

@@ -12,7 +12,11 @@ from spine.perception.kinematics.data_structures import TrajectoryMetadata
 def test_parse_generic_json(tmp_path: Path) -> None:
     payload = {
         "frames": [
-            {"timestamp": 0.0, "end_effector_pose": [0, 0, 0, 0, 0, 0, 1], "joint_positions": [0.1, 0.2]},
+            {
+                "timestamp": 0.0,
+                "end_effector_pose": [0, 0, 0, 0, 0, 0, 1],
+                "joint_positions": [0.1, 0.2],
+            },
             {"time": 0.1, "ee_pose": [0, 0, 0, 0, 0, 0, 1], "joints": [0.3, 0.4]},
         ]
     }
@@ -57,7 +61,12 @@ def test_parse_mimicgen_hdf5(tmp_path: Path) -> None:
     from spine.perception.kinematics.sources_mimicgen import MimicGenAdapter
     from spine.perception.kinematics.configs import MimicGenConfig, AugmentationConfig
 
-    adapter = MimicGenAdapter(MimicGenConfig(dataset_root=tmp_path, augmentations=AugmentationConfig(time_warp_factor=0.0)))
+    adapter = MimicGenAdapter(
+        MimicGenConfig(
+            dataset_root=tmp_path,
+            augmentations=AugmentationConfig(time_warp_factor=0.0),
+        )
+    )
 
     traj = next(adapter._load_hdf5(h5_path))
 

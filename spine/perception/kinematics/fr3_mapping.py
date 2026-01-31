@@ -25,7 +25,9 @@ FR3_TCP_RPY = (0.0, 0.0, 0.0)
 def validate_fr3_joint_positions(joints: Sequence[float]) -> None:
     """Checks that provided joint vector matches FR3 ordering and length."""
     if len(joints) != len(FR3_JOINT_NAMES):
-        raise ValueError(f"FR3 expects {len(FR3_JOINT_NAMES)} joints, got {len(joints)}")
+        raise ValueError(
+            f"FR3 expects {len(FR3_JOINT_NAMES)} joints, got {len(joints)}"
+        )
 
 
 __all__ = [

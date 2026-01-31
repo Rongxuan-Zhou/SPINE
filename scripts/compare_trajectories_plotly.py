@@ -14,7 +14,9 @@ from plotly.subplots import make_subplots
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Overlay trajectories in one interactive Plotly figure.")
+    parser = argparse.ArgumentParser(
+        description="Overlay trajectories in one interactive Plotly figure."
+    )
     parser.add_argument(
         "inputs",
         type=Path,
@@ -62,17 +64,38 @@ def main() -> None:
             col=1,
         )
         fig.add_trace(
-            go.Scatter(x=t, y=x, mode="lines", name=f"{name}-x", legendgroup=name, line=dict(color="#ff7f0e")),
+            go.Scatter(
+                x=t,
+                y=x,
+                mode="lines",
+                name=f"{name}-x",
+                legendgroup=name,
+                line=dict(color="#ff7f0e"),
+            ),
             row=1,
             col=2,
         )
         fig.add_trace(
-            go.Scatter(x=t, y=y, mode="lines", name=f"{name}-y", legendgroup=name, line=dict(color="#2ca02c")),
+            go.Scatter(
+                x=t,
+                y=y,
+                mode="lines",
+                name=f"{name}-y",
+                legendgroup=name,
+                line=dict(color="#2ca02c"),
+            ),
             row=1,
             col=2,
         )
         fig.add_trace(
-            go.Scatter(x=t, y=z, mode="lines", name=f"{name}-z", legendgroup=name, line=dict(color="#1f77b4")),
+            go.Scatter(
+                x=t,
+                y=z,
+                mode="lines",
+                name=f"{name}-z",
+                legendgroup=name,
+                line=dict(color="#1f77b4"),
+            ),
             row=1,
             col=2,
         )

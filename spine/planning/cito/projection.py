@@ -8,7 +8,11 @@ from typing import List
 
 import numpy as np
 
-from spine.perception.kinematics.data_structures import KinematicFrame, KinematicTrajectory, TrajectoryMetadata
+from spine.perception.kinematics.data_structures import (
+    KinematicFrame,
+    KinematicTrajectory,
+    TrajectoryMetadata,
+)
 from .configs import CITOParameters
 from .solver import CITOPlanner, Trajectory
 
@@ -32,7 +36,9 @@ def _load_kinematic_json(path: Path) -> KinematicTrajectory:
 
 
 def _to_state_array(traj: KinematicTrajectory) -> np.ndarray:
-    return np.stack([np.array(f.end_effector_pose[:3], dtype=float) for f in traj.frames], axis=0)
+    return np.stack(
+        [np.array(f.end_effector_pose[:3], dtype=float) for f in traj.frames], axis=0
+    )
 
 
 def project_trajectory(

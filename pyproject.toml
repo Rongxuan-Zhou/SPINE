@@ -2,6 +2,20 @@
 line-length = 88
 target-version = ["py310"]
 include = "\\.pyi?$"
+exclude = '''
+/(
+    external
+  | data
+  | results
+  | logs
+  | wandb
+  | ros2_ws
+  | \.venv
+  | \.venv_.*
+  | docs/reference
+  | docs/pics
+)
+/'''
 
 [tool.ruff]
 line-length = 88
@@ -21,11 +35,11 @@ exclude = [
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
 ignore = ["E501", "I001"]
-per-file-ignores = {
-    "tools/*.py" = ["E402", "F401", "F841"],
-    "scripts/*.py" = ["E402", "F401", "F841"],
-    "tests/conftest.py" = ["E402"],
-}
+
+[tool.ruff.lint.per-file-ignores]
+"tools/*.py" = ["E402", "F401", "F841"]
+"scripts/*.py" = ["E402", "F401", "F841"]
+"tests/conftest.py" = ["E402"]
 
 [tool.pytest.ini_options]
 markers = [

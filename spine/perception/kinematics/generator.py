@@ -31,14 +31,25 @@ class KinematicGenerator:
         for adapter in self.adapters:
             logger.info("Running kinematic source adapter: %s", adapter.source_name)
             for idx, trajectory in enumerate(adapter.generate()):
-                if self.max_trajectories is not None and len(generated_paths) >= self.max_trajectories:
-                    logger.info("Reached max_trajectories=%s; stopping early", self.max_trajectories)
+                if (
+                    self.max_trajectories is not None
+                    and len(generated_paths) >= self.max_trajectories
+                ):
+                    logger.info(
+                        "Reached max_trajectories=%s; stopping early",
+                        self.max_trajectories,
+                    )
                     return generated_paths
                 file_path = self._write_trajectory(adapter, idx, trajectory)
                 generated_paths.append(file_path)
         return generated_paths
 
-    def _write_trajectory(self, adapter: KinematicSourceAdapter, index: int, trajectory: KinematicTrajectory) -> Path:
+    def _write_trajectory(
+        self,
+        adapter: KinematicSourceAdapter,
+        index: int,
+        trajectory: KinematicTrajectory,
+    ) -> Path:
         trajectory.validate()
         adapter_dir = self.output_dir / adapter.source_name
         filename = self._build_filename(adapter, index, trajectory)
@@ -48,7 +59,9 @@ class KinematicGenerator:
         return path
 
     @staticmethod
-    def _build_filename(adapter: KinematicSourceAdapter, index: int, trajectory: KinematicTrajectory) -> str:
+    def _build_filename(
+        adapter: KinematicSourceAdapter, index: int, trajectory: KinematicTrajectory
+    ) -> str:
         clip = trajectory.metadata.clip_id or "clip"
         clip_sanitized = clip.replace(" ", "_")
         return f"{clip_sanitized}_{adapter.source_name}_{index:04d}.json"

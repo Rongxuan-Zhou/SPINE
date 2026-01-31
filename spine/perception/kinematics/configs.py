@@ -42,7 +42,9 @@ class R2R2RConfig:
     def as_dict(self) -> Dict[str, object]:
         return {
             "capture_root": str(self.capture_root),
-            "reconstructions_dir": str(self.reconstructions_dir) if self.reconstructions_dir else None,
+            "reconstructions_dir": (
+                str(self.reconstructions_dir) if self.reconstructions_dir else None
+            ),
             "clip_filter": list(self.clip_filter),
             "enable_gaussian_splatting": self.enable_gaussian_splatting,
             "background_randomization": self.background_randomization,

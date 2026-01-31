@@ -15,9 +15,23 @@ def main():
     parser.add_argument("--comp_penalty", type=float, default=0.01)
     parser.add_argument("--dt", type=float, default=0.05)
     parser.add_argument("--timeout", type=int, default=120)
-    parser.add_argument("--python_bin", type=str, default="python", help="Python executable (e.g., conda run -n spine_opt python)")
-    parser.add_argument("--limit", type=int, default=None, help="Stop after producing this many successful outputs (paired).")
-    parser.add_argument("--skip-existing", action="store_true", help="Skip inputs that already have outputs in output_dir.")
+    parser.add_argument(
+        "--python_bin",
+        type=str,
+        default="python",
+        help="Python executable (e.g., conda run -n spine_opt python)",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Stop after producing this many successful outputs (paired).",
+    )
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Skip inputs that already have outputs in output_dir.",
+    )
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -38,7 +52,9 @@ def main():
     existing_count = len(existing_pairs)
     target_total = args.limit if args.limit is not None else None
     if target_total is not None and existing_count >= target_total:
-        print(f"✅ Already have {existing_count} paired outputs (>= limit {target_total}); nothing to do.")
+        print(
+            f"✅ Already have {existing_count} paired outputs (>= limit {target_total}); nothing to do."
+        )
         return
 
     python_cmd = shlex.split(args.python_bin)
@@ -55,28 +71,44 @@ def main():
             if args.skip_existing and base in existing_pairs:
                 stats["skipped"] += 1
                 continue
-            if target_total is not None and (existing_count + stats["success"]) >= target_total:
+            if (
+                target_total is not None
+                and (existing_count + stats["success"]) >= target_total
+            ):
                 break
             # 1) 转换 JSON -> npy 到固定路径，避免冲突
             ref_path = "data/current_batch_ref.npy"
             cmd_convert = [
-                *python_cmd, "tools/convert_mimicgen_to_npy.py",
-                "--input", jf,
-                "--output", ref_path,
+                *python_cmd,
+                "tools/convert_mimicgen_to_npy.py",
+                "--input",
+                jf,
+                "--output",
+                ref_path,
             ]
-            subprocess.run(cmd_convert, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                cmd_convert, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
 
             # 2) 运行 CITO（自动窗口检测）
             cmd_cito = [
-                *python_cmd, "tools/casadi_cito_mvp.py",
-                "--urdf", args.urdf,
-                "--q-ref", ref_path,
-                "--table-height", str(args.table_height),
-                "--comp-penalty", str(args.comp_penalty),
-                "--dt", str(args.dt),
+                *python_cmd,
+                "tools/casadi_cito_mvp.py",
+                "--urdf",
+                args.urdf,
+                "--q-ref",
+                ref_path,
+                "--table-height",
+                str(args.table_height),
+                "--comp-penalty",
+                str(args.comp_penalty),
+                "--dt",
+                str(args.dt),
             ]
             try:
-                res = subprocess.run(cmd_cito, capture_output=True, text=True, timeout=args.timeout)
+                res = subprocess.run(
+                    cmd_cito, capture_output=True, text=True, timeout=args.timeout
+                )
             except subprocess.TimeoutExpired:
                 stats["timeout"] += 1
                 flog.write(f"{base}: TIMEOUT\n")

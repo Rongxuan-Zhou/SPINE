@@ -7,17 +7,27 @@ import argparse
 
 def convert_mimicgen():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", type=str, default=None, help="Specific JSON file path")
-    parser.add_argument("--gripper", type=float, default=0.0, help="Padding value for gripper DOF")
-    parser.add_argument("--dt", type=float, default=0.05, help="Assumed dt for duration estimate")
-    parser.add_argument("--output", type=str, default="data/fr3_q_ref.npy", help="Output npy path")
+    parser.add_argument(
+        "--input", type=str, default=None, help="Specific JSON file path"
+    )
+    parser.add_argument(
+        "--gripper", type=float, default=0.0, help="Padding value for gripper DOF"
+    )
+    parser.add_argument(
+        "--dt", type=float, default=0.05, help="Assumed dt for duration estimate"
+    )
+    parser.add_argument(
+        "--output", type=str, default="data/fr3_q_ref.npy", help="Output npy path"
+    )
     args = parser.parse_args()
 
     # 1. 寻找源文件
     if args.input:
         target_files = [args.input]
     else:
-        files = sorted(glob.glob("data/kinematics/mimicgen/*.json"), key=os.path.getmtime)
+        files = sorted(
+            glob.glob("data/kinematics/mimicgen/*.json"), key=os.path.getmtime
+        )
         if not files:
             print("❌ No MimicGen JSON files found in data/kinematics/mimicgen/")
             return

@@ -23,7 +23,14 @@ def _perturb_quaternion(q: List[float], rotation_noise_deg: float) -> List[float
     axis = axis / norm
     angle_rad = math.radians(rotation_noise_deg) * np.random.uniform(-1.0, 1.0)
     half = angle_rad / 2.0
-    dq = np.array([axis[0] * math.sin(half), axis[1] * math.sin(half), axis[2] * math.sin(half), math.cos(half)])
+    dq = np.array(
+        [
+            axis[0] * math.sin(half),
+            axis[1] * math.sin(half),
+            axis[2] * math.sin(half),
+            math.cos(half),
+        ]
+    )
     q_orig = np.array(q)
     # Quaternion multiplication dq * q_orig
     x1, y1, z1, w1 = dq
@@ -59,7 +66,9 @@ def apply_augmentations(
     frames: List[KinematicFrame] = []
     warp_scale = 1.0
     if time_warp and cfg.time_warp_factor > 0:
-        warp_scale = random.uniform(1.0 - cfg.time_warp_factor, 1.0 + cfg.time_warp_factor)
+        warp_scale = random.uniform(
+            1.0 - cfg.time_warp_factor, 1.0 + cfg.time_warp_factor
+        )
     for frame in trajectory.frames:
         augmented = _apply_noise(frame, cfg)
         augmented.timestamp = frame.timestamp * warp_scale

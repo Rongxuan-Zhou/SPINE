@@ -38,7 +38,9 @@ def freeze_best_evidence(
     best_peak = -1
     best_data = None
 
-    print(f"🕵️ Scanning seeds until Peak > {target_threshold} (max {max_trials} trials)...")
+    print(
+        f"🕵️ Scanning seeds until Peak > {target_threshold} (max {max_trials} trials)..."
+    )
     for i in range(1, max_trials + 1):
         action = torch.randn(1, 16, 9, device=device)
         joint = torch.randn(1, 9, device=device)

@@ -8,8 +8,16 @@ def _write_kinematic(path: Path) -> None:
     payload = {
         "metadata": {"source": "dummy", "clip_id": "penetrating"},
         "frames": [
-            {"timestamp": 0.0, "end_effector_pose": [0, 0, -0.05, 0, 0, 0, 1], "joint_positions": [0] * 7},
-            {"timestamp": 0.05, "end_effector_pose": [0, 0, -0.02, 0, 0, 0, 1], "joint_positions": [0] * 7},
+            {
+                "timestamp": 0.0,
+                "end_effector_pose": [0, 0, -0.05, 0, 0, 0, 1],
+                "joint_positions": [0] * 7,
+            },
+            {
+                "timestamp": 0.05,
+                "end_effector_pose": [0, 0, -0.02, 0, 0, 0, 1],
+                "joint_positions": [0] * 7,
+            },
         ],
     }
     path.write_text(json.dumps(payload), encoding="utf-8")

@@ -34,8 +34,12 @@ class SpineH5Dataset(Dataset):
     def __getitem__(self, idx):
         with h5py.File(self.h5_path, "r") as f:
             k = self.keys[idx]
-            q = torch.tensor(f["data"][k]["obs"]["joint_positions"][()], dtype=torch.float32)  # (T,9)
-            force = torch.tensor(f["data"][k]["obs"]["ee_forces"][()], dtype=torch.float32)    # (T,1)
+            q = torch.tensor(
+                f["data"][k]["obs"]["joint_positions"][()], dtype=torch.float32
+            )  # (T,9)
+            force = torch.tensor(
+                f["data"][k]["obs"]["ee_forces"][()], dtype=torch.float32
+            )  # (T,1)
 
         # 归一化（简单占位，可改为预计算统计）
         force = (force - self.force_mean) / (self.force_std + 1e-6)
@@ -53,7 +57,7 @@ class SpineH5Dataset(Dataset):
         noisy_action = actions + 0.01 * torch.randn_like(actions)
 
         # 观测取窗口首帧
-        obs_joint = q[0]           # (9,)
+        obs_joint = q[0]  # (9,)
         obs_force = force[0][: self.force_dim]  # (force_dim,)
 
         return noisy_action, obs_joint, obs_force, actions

@@ -7,12 +7,13 @@ import logging
 import os
 from pathlib import Path
 
-
 _REPO_ROOT = Path(__file__).resolve().parents[4]
 logger = logging.getLogger(__name__)
 
 
-def require_dependency(module_name: str, repo_name: str, repo_url: str, install_subdir: str) -> None:
+def require_dependency(
+    module_name: str, repo_name: str, repo_url: str, install_subdir: str
+) -> None:
     """Raise a clear ImportError when optional adapter deps are missing."""
     if os.getenv("SPINE_SKIP_DEP_CHECK"):
         logger.debug("跳过依赖检查 %s 因为设置了 SPINE_SKIP_DEP_CHECK", module_name)

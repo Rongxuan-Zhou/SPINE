@@ -38,7 +38,9 @@ class MimicGenAdapter(KinematicSourceAdapter):
         json_paths = discover_json_trajectories(self.config.dataset_root)
         hdf5_paths = sorted(Path(self.config.dataset_root).glob("*.hdf5"))
         if not json_paths and not hdf5_paths:
-            raise FileNotFoundError(f"{self.config.dataset_root} 下未发现 MimicGen 轨迹（JSON 或 HDF5）")
+            raise FileNotFoundError(
+                f"{self.config.dataset_root} 下未发现 MimicGen 轨迹（JSON 或 HDF5）"
+            )
         for path in json_paths:
             metadata = TrajectoryMetadata(
                 source="mimicgen",
@@ -46,7 +48,11 @@ class MimicGenAdapter(KinematicSourceAdapter):
                 augmentations=self.config.augmentations.as_dict(),
             )
             logger.debug("解析 MimicGen JSON 轨迹 %s", path)
-            yield from maybe_augment(parse_trajectory_json(path, metadata), self.config.augmentations, num_aug=1)
+            yield from maybe_augment(
+                parse_trajectory_json(path, metadata),
+                self.config.augmentations,
+                num_aug=1,
+            )
         for h5_path in hdf5_paths:
             logger.debug("解析 MimicGen HDF5 %s", h5_path)
             yield from self._load_hdf5(h5_path)
@@ -68,7 +74,11 @@ class MimicGenAdapter(KinematicSourceAdapter):
                     augmentations=self.config.augmentations.as_dict(),
                 )
                 base_traj = KinematicTrajectory(frames=frames, metadata=metadata)
-                yield from maybe_augment(base_traj, self.config.augmentations, num_aug=self.config.max_augmentations_per_demo)
+                yield from maybe_augment(
+                    base_traj,
+                    self.config.augmentations,
+                    num_aug=self.config.max_augmentations_per_demo,
+                )
 
     def _extract_demo_frames(self, f: h5py.File, demo: str) -> List[KinematicFrame]:
         pos_key = f"data/{demo}/obs/robot0_eef_pos"
@@ -86,7 +96,9 @@ class MimicGenAdapter(KinematicSourceAdapter):
                 ee_pose.extend(quat[idx].tolist())
             else:
                 ee_pose.extend([0.0, 0.0, 0.0, 1.0])
-            joint_positions = joints[idx].tolist() if joints is not None and idx < len(joints) else []
+            joint_positions = (
+                joints[idx].tolist() if joints is not None and idx < len(joints) else []
+            )
             frames.append(
                 KinematicFrame(
                     timestamp=idx * 0.05,  # MimicGen 控制频率约 20Hz

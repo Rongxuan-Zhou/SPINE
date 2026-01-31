@@ -26,17 +26,25 @@ class _DummyAdapter(KinematicSourceAdapter):
 
 def _make_trajectory(clip_id: str, timestamps: List[float]) -> KinematicTrajectory:
     frames = [
-        KinematicFrame(timestamp=t, joint_positions=[0.0, 1.0], end_effector_pose=[0, 0, 0, 0, 0, 0, 1])
+        KinematicFrame(
+            timestamp=t,
+            joint_positions=[0.0, 1.0],
+            end_effector_pose=[0, 0, 0, 0, 0, 0, 1],
+        )
         for t in timestamps
     ]
-    metadata = TrajectoryMetadata(source="dummy", clip_id=clip_id, augmentations={"position_noise_m": 0.01})
+    metadata = TrajectoryMetadata(
+        source="dummy", clip_id=clip_id, augmentations={"position_noise_m": 0.01}
+    )
     return KinematicTrajectory(frames=frames, metadata=metadata)
 
 
 def test_generator_writes_json(tmp_path: Path) -> None:
     traj = _make_trajectory("clip_a", [0.0, 0.1, 0.2])
     adapter = _DummyAdapter("dummy_source", [traj])
-    generator = KinematicGenerator(output_dir=tmp_path, adapters=[adapter], max_trajectories=None)
+    generator = KinematicGenerator(
+        output_dir=tmp_path, adapters=[adapter], max_trajectories=None
+    )
 
     paths = generator.run()
 
@@ -52,7 +60,9 @@ def test_generator_writes_json(tmp_path: Path) -> None:
 def test_generator_respects_max_count(tmp_path: Path) -> None:
     trajectories = [_make_trajectory(f"clip_{i}", [0.0, 0.1]) for i in range(3)]
     adapter = _DummyAdapter("dummy_source", trajectories)
-    generator = KinematicGenerator(output_dir=tmp_path, adapters=[adapter], max_trajectories=2)
+    generator = KinematicGenerator(
+        output_dir=tmp_path, adapters=[adapter], max_trajectories=2
+    )
 
     paths = generator.run()
 

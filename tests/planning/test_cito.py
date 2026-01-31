@@ -30,7 +30,9 @@ def test_cito_reduces_penetration() -> None:
     target = np.array([[0.2, 0.0], [0.2, 0.0], [0.2, 0.0]], dtype=float)
     traj = Trajectory(states=states, controls=controls)
 
-    result = planner.optimize(traj, dynamics_fn=dynamics, contact_fn=contact, target_states=target)
+    result = planner.optimize(
+        traj, dynamics_fn=dynamics, contact_fn=contact, target_states=target
+    )
 
     # final positions should move towards +x and reduce penetration
     assert result.trajectory.states[:, 0].min() > -0.05

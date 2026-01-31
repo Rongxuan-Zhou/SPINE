@@ -32,9 +32,13 @@ class R2R2RAdapter(KinematicSourceAdapter):
 
     def generate(self) -> Iterable[KinematicTrajectory]:
         self._ensure_available()
-        json_paths = discover_json_trajectories(self.config.capture_root, self.config.clip_filter)
+        json_paths = discover_json_trajectories(
+            self.config.capture_root, self.config.clip_filter
+        )
         if not json_paths:
-            raise FileNotFoundError(f"{self.config.capture_root} 下未发现 R2R2R 轨迹 JSON")
+            raise FileNotFoundError(
+                f"{self.config.capture_root} 下未发现 R2R2R 轨迹 JSON"
+            )
         for path in json_paths:
             metadata = TrajectoryMetadata(
                 source="r2r2r",
@@ -42,7 +46,11 @@ class R2R2RAdapter(KinematicSourceAdapter):
                 augmentations=self.config.augmentations.as_dict(),
             )
             logger.debug("解析 R2R2R 轨迹 %s", path)
-            yield from maybe_augment(parse_trajectory_json(path, metadata), self.config.augmentations, num_aug=1)
+            yield from maybe_augment(
+                parse_trajectory_json(path, metadata),
+                self.config.augmentations,
+                num_aug=1,
+            )
 
 
 __all__ = ["R2R2RAdapter"]

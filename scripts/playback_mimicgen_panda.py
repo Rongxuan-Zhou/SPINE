@@ -138,26 +138,45 @@ def patch_cv2_destroy() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Replay MimicGen joint trajectory on robosuite Panda.")
-    parser.add_argument("trajectory", type=Path, help="Path to trajectory JSON with joint_positions")
+    parser = argparse.ArgumentParser(
+        description="Replay MimicGen joint trajectory on robosuite Panda."
+    )
+    parser.add_argument(
+        "trajectory", type=Path, help="Path to trajectory JSON with joint_positions"
+    )
     parser.add_argument("--env", type=str, default="Lift", help="robosuite env name")
-    parser.add_argument("--horizon", type=int, default=None, help="Optional horizon to truncate playback")
-    parser.add_argument("--render", action="store_true", help="Enable on-screen rendering (opens Mujoco viewer)")
+    parser.add_argument(
+        "--horizon",
+        type=int,
+        default=None,
+        help="Optional horizon to truncate playback",
+    )
+    parser.add_argument(
+        "--render",
+        action="store_true",
+        help="Enable on-screen rendering (opens Mujoco viewer)",
+    )
     parser.add_argument(
         "--playback-rate",
         type=float,
         default=1.0,
         help="Playback speed multiplier relative to control_freq (1.0 = real-time)",
     )
-    parser.add_argument("--mjcf", type=Path, default=None, help="Custom MJCF for robot (e.g., FR3)")
-    parser.add_argument("--robot-name", type=str, default="Panda", help="Robot name (default Panda)")
+    parser.add_argument(
+        "--mjcf", type=Path, default=None, help="Custom MJCF for robot (e.g., FR3)"
+    )
+    parser.add_argument(
+        "--robot-name", type=str, default="Panda", help="Robot name (default Panda)"
+    )
     parser.add_argument(
         "--hdf5",
         type=Path,
         default=None,
         help="Optional MimicGen hdf5 to align object pose and gripper (demo name must exist).",
     )
-    parser.add_argument("--demo", type=str, default=None, help="Demo name inside hdf5 (e.g., demo_0)")
+    parser.add_argument(
+        "--demo", type=str, default=None, help="Demo name inside hdf5 (e.g., demo_0)"
+    )
     parser.add_argument(
         "--renderer",
         type=str,
@@ -236,7 +255,9 @@ def main() -> None:
             w_str, h_str = args.record_res.lower().split("x")
             rec_width, rec_height = int(w_str), int(h_str)
         except Exception as exc:  # noqa: BLE001
-            raise ValueError(f"Invalid --record-res '{args.record_res}', expected WIDTHxHEIGHT") from exc
+            raise ValueError(
+                f"Invalid --record-res '{args.record_res}', expected WIDTHxHEIGHT"
+            ) from exc
 
     # Avoid OpenCV GUI teardown crashes in headless builds when viewer closes.
     if args.render:
@@ -249,7 +270,9 @@ def main() -> None:
     eef_quat = None
     eef_quat_all = None
     if args.hdf5 and args.demo:
-        jp_h5, grip_h5, obj_h5, obj_goal_h5, eef_quat_h5 = load_hdf5_demo(args.hdf5, args.demo)
+        jp_h5, grip_h5, obj_h5, obj_goal_h5, eef_quat_h5 = load_hdf5_demo(
+            args.hdf5, args.demo
+        )
         q_traj = jp_h5
         grip_traj = grip_h5
         obj_pose = obj_h5[0] if obj_h5 is not None else None
@@ -271,6 +294,7 @@ def main() -> None:
     record_path = args.record_path
     if record:
         import cv2  # Lazy import so non-record runs don't require it
+
         record_path.parent.mkdir(parents=True, exist_ok=True)
         suffix = record_path.suffix.lower()
         primary_codec = "mp4v" if suffix == ".mp4" else "MJPG"
@@ -278,7 +302,10 @@ def main() -> None:
 
         def make_writer(codec: str) -> cv2.VideoWriter:
             return cv2.VideoWriter(
-                str(record_path), cv2.VideoWriter_fourcc(*codec), args.record_fps, (rec_width, rec_height)
+                str(record_path),
+                cv2.VideoWriter_fourcc(*codec),
+                args.record_fps,
+                (rec_width, rec_height),
             )
 
         writer = make_writer(primary_codec)
@@ -318,9 +345,13 @@ def main() -> None:
             if args.base_xyz is not None:
                 try:
                     x_str, y_str, z_str = args.base_xyz.split(",")
-                    env.sim.model.body_pos[bid] = np.array([float(x_str), float(y_str), float(z_str)])
+                    env.sim.model.body_pos[bid] = np.array(
+                        [float(x_str), float(y_str), float(z_str)]
+                    )
                 except Exception as exc:  # noqa: BLE001
-                    raise ValueError(f"Invalid --base-xyz '{args.base_xyz}', expected 'x,y,z'") from exc
+                    raise ValueError(
+                        f"Invalid --base-xyz '{args.base_xyz}', expected 'x,y,z'"
+                    ) from exc
             env.sim.forward()
         except Exception:
             # Silently ignore if base transform fails
@@ -408,7 +439,9 @@ def main() -> None:
                 import cv2  # type: ignore
 
                 # mujoco expects (width, height); returned frame shape is (height, width, 3)
-                frame = env.sim.render(rec_width, rec_height, camera_name=args.record_camera)
+                frame = env.sim.render(
+                    rec_width, rec_height, camera_name=args.record_camera
+                )
                 frame_uint8 = np.asarray(frame, dtype=np.uint8)
                 frame_bgr = cv2.cvtColor(frame_uint8, cv2.COLOR_RGB2BGR)
                 writer.write(np.ascontiguousarray(frame_bgr))

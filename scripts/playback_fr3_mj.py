@@ -23,12 +23,28 @@ def load_joints(path: Path) -> np.ndarray:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Play FR3 joint trajectory using MuJoCo.")
-    parser.add_argument("trajectory", type=Path, help="Trajectory JSON with 7-DOF joints")
-    parser.add_argument("--mjcf", type=Path, required=True, help="Path to FR3 MJCF (e.g., menagerie fr3.xml)")
+    parser = argparse.ArgumentParser(
+        description="Play FR3 joint trajectory using MuJoCo."
+    )
+    parser.add_argument(
+        "trajectory", type=Path, help="Trajectory JSON with 7-DOF joints"
+    )
+    parser.add_argument(
+        "--mjcf",
+        type=Path,
+        required=True,
+        help="Path to FR3 MJCF (e.g., menagerie fr3.xml)",
+    )
     parser.add_argument("--render", action="store_true", help="Enable GLFW viewer")
-    parser.add_argument("--horizon", type=int, default=None, help="Optional truncation length")
-    parser.add_argument("--dt", type=float, default=1 / 60.0, help="Playback timestep (s), default 60 Hz")
+    parser.add_argument(
+        "--horizon", type=int, default=None, help="Optional truncation length"
+    )
+    parser.add_argument(
+        "--dt",
+        type=float,
+        default=1 / 60.0,
+        help="Playback timestep (s), default 60 Hz",
+    )
     parser.add_argument(
         "--playback-rate",
         type=float,
@@ -46,6 +62,7 @@ def main() -> None:
 
     viewer = mujoco.viewer.launch_passive(model, data) if args.render else None
     import time
+
     step_dt = args.dt / max(args.playback_rate, 1e-6)
 
     for q in q_traj:

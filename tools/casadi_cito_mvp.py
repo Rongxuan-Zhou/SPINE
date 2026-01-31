@@ -74,7 +74,9 @@ def run_cito(args):
         half_win = args.window_size // 2
         start_idx = max(0, min_z_idx - half_win)
         end_idx = min(len(q_all), min_z_idx + half_win)
-        print(f"🤖 Auto-detected collision at frame {min_z_idx}; window [{start_idx}, {end_idx}]")
+        print(
+            f"🤖 Auto-detected collision at frame {min_z_idx}; window [{start_idx}, {end_idx}]"
+        )
     else:
         start_idx = args.start_idx
         end_idx = args.end_idx
@@ -96,8 +98,8 @@ def run_cito(args):
         raise ValueError(f"q_ref dim {nq_data} != model nq {nq}")
 
     opti = ca.Opti()
-    Q = opti.variable(nq, T)    # positions
-    F = opti.variable(1, T)     # normal force
+    Q = opti.variable(nq, T)  # positions
+    F = opti.variable(1, T)  # normal force
 
     Q_ref = opti.parameter(nq, T)
     opti.set_value(Q_ref, q_ref.T)
@@ -162,7 +164,14 @@ def run_cito(args):
     np.save("data/fr3_opt_forces.npy", f_opt)
     print("✅ Optimization Success")
     print("Saved to data/fr3_opt_result.npy and data/fr3_opt_forces.npy")
-    print("Contact force stats: min", f_opt.min(), "max", f_opt.max(), "mean", f_opt.mean())
+    print(
+        "Contact force stats: min",
+        f_opt.min(),
+        "max",
+        f_opt.max(),
+        "mean",
+        f_opt.mean(),
+    )
 
 
 if __name__ == "__main__":
@@ -170,13 +179,27 @@ if __name__ == "__main__":
     parser.add_argument("--urdf", type=str, required=True)
     parser.add_argument("--q-ref", type=str, required=True)
     parser.add_argument("--time-steps", type=int, default=20)
-    parser.add_argument("--start-idx", type=int, default=None, help="Slice start index (auto if None)")
-    parser.add_argument("--end-idx", type=int, default=None, help="Slice end index (exclusive, auto if None)")
-    parser.add_argument("--window-size", type=int, default=100, help="Auto window size when start/end not set")
+    parser.add_argument(
+        "--start-idx", type=int, default=None, help="Slice start index (auto if None)"
+    )
+    parser.add_argument(
+        "--end-idx",
+        type=int,
+        default=None,
+        help="Slice end index (exclusive, auto if None)",
+    )
+    parser.add_argument(
+        "--window-size",
+        type=int,
+        default=100,
+        help="Auto window size when start/end not set",
+    )
     parser.add_argument("--dt", type=float, default=0.05)
     parser.add_argument("--contact-frame", type=str, default="fr3_link8")
     parser.add_argument("--table-height", type=float, default=0.0)
     parser.add_argument("--mu", type=float, default=0.5)
-    parser.add_argument("--comp-penalty", type=float, default=1e-3, help="Relaxation epsilon")
+    parser.add_argument(
+        "--comp-penalty", type=float, default=1e-3, help="Relaxation epsilon"
+    )
     args = parser.parse_args()
     run_cito(args)

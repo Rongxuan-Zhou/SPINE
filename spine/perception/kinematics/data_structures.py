@@ -64,7 +64,9 @@ class KinematicTrajectory:
             raise ValueError("Frame timestamps must be non-decreasing")
         ee_lengths = {len(frame.end_effector_pose) for frame in self.frames}
         if ee_lengths != {7}:
-            raise ValueError("End-effector pose must contain 7 elements (x, y, z, qx, qy, qz, qw)")
+            raise ValueError(
+                "End-effector pose must contain 7 elements (x, y, z, qx, qy, qz, qw)"
+            )
 
     def as_dict(self) -> Dict[str, object]:
         self.validate()
@@ -79,5 +81,7 @@ class KinematicTrajectory:
             json.dump(self.as_dict(), fp, ensure_ascii=True, indent=2)
 
     @classmethod
-    def from_iterable(cls, frames: Iterable[KinematicFrame], metadata: TrajectoryMetadata) -> "KinematicTrajectory":
+    def from_iterable(
+        cls, frames: Iterable[KinematicFrame], metadata: TrajectoryMetadata
+    ) -> "KinematicTrajectory":
         return cls(frames=list(frames), metadata=metadata)

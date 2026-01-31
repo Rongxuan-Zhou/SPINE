@@ -3,7 +3,10 @@ from pathlib import Path
 
 import numpy as np
 
-from spine.planning.cito.joint_projection import JointProjectionConfig, project_joint_trajectory
+from spine.planning.cito.joint_projection import (
+    JointProjectionConfig,
+    project_joint_trajectory,
+)
 
 
 def _write_joint_json(path: Path, q_list: list[list[float]]) -> None:
@@ -16,7 +19,10 @@ def _write_joint_json(path: Path, q_list: list[list[float]]) -> None:
                 "end_effector_pose": [0, 0, 0, 0, 0, 0, 1],
             }
         )
-    payload = {"metadata": {"source": "dummy", "clip_id": "joint_test"}, "frames": frames}
+    payload = {
+        "metadata": {"source": "dummy", "clip_id": "joint_test"},
+        "frames": frames,
+    }
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 

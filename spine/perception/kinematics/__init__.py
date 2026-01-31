@@ -10,7 +10,12 @@ from .configs import (
 from .config_loader import load_kinematic_generator_config
 from .data_structures import KinematicFrame, KinematicTrajectory, TrajectoryMetadata
 from .generator import KinematicGenerator
-from .sources import DexCapAdapter, KinematicSourceAdapter, MimicGenAdapter, R2R2RAdapter
+from .sources import (
+    DexCapAdapter,
+    KinematicSourceAdapter,
+    MimicGenAdapter,
+    R2R2RAdapter,
+)
 
 __all__ = [
     "AugmentationConfig",

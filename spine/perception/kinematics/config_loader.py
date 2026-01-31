@@ -30,7 +30,11 @@ def _load_r2r2r(data: Mapping[str, Any] | None) -> Optional[R2R2RConfig]:
         return None
     return R2R2RConfig(
         capture_root=Path(data["capture_root"]),
-        reconstructions_dir=Path(data["reconstructions_dir"]) if data.get("reconstructions_dir") else None,
+        reconstructions_dir=(
+            Path(data["reconstructions_dir"])
+            if data.get("reconstructions_dir")
+            else None
+        ),
         clip_filter=list(data.get("clip_filter", [])),
         enable_gaussian_splatting=bool(data.get("enable_gaussian_splatting", True)),
         background_randomization=bool(data.get("background_randomization", True)),

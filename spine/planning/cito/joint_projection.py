@@ -9,9 +9,12 @@ from typing import List
 
 import numpy as np
 
-from spine.perception.kinematics.data_structures import KinematicFrame, KinematicTrajectory, TrajectoryMetadata
+from spine.perception.kinematics.data_structures import (
+    KinematicFrame,
+    KinematicTrajectory,
+    TrajectoryMetadata,
+)
 from spine.perception.kinematics.fr3_mapping import FR3_JOINT_NAMES
-
 
 # Franka joint limits (rad), symmetric for Panda/FR3.
 JOINT_LOWER = np.array([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973])

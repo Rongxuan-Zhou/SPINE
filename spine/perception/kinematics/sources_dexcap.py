@@ -46,15 +46,23 @@ class DexCapAdapter(KinematicSourceAdapter):
         root = self.config.dataset_root
         episode_dirs = _find_dexcap_episode_dirs(root, self.config.clip_filter)
         for episode_dir in episode_dirs:
-            metadata = TrajectoryMetadata(source="dexcap", clip_id=episode_dir.name, augmentations={})
+            metadata = TrajectoryMetadata(
+                source="dexcap", clip_id=episode_dir.name, augmentations={}
+            )
             logger.debug("解析 DexCap 原始帧目录 %s", episode_dir)
             if self.config.use_ik:
                 if not self.config.mjcf_path:
                     raise ValueError("DexCap use_ik=True 但未提供 mjcf_path")
-                traj = self._retarget_with_ik(episode_dir, metadata, self.config.mjcf_path, self.config.ik_horizon)
+                traj = self._retarget_with_ik(
+                    episode_dir, metadata, self.config.mjcf_path, self.config.ik_horizon
+                )
             else:
-                traj = self._project_to_fr3(parse_dexcap_episode_frames(episode_dir, metadata))
-            yield from maybe_augment(traj, self.config.augmentations, num_aug=self.num_aug)
+                traj = self._project_to_fr3(
+                    parse_dexcap_episode_frames(episode_dir, metadata)
+                )
+            yield from maybe_augment(
+                traj, self.config.augmentations, num_aug=self.num_aug
+            )
 
     def _project_to_fr3(self, traj: KinematicTrajectory) -> KinematicTrajectory:
         frames = []
@@ -65,7 +73,10 @@ class DexCapAdapter(KinematicSourceAdapter):
                 continue
             fr3_joints = [joints[i] for i in FR3_JOINT_INDEXES]
             if not warned:
-                logger.debug("DexCap->FR3 using placeholder slice of 7/len=%d joints", len(joints))
+                logger.debug(
+                    "DexCap->FR3 using placeholder slice of 7/len=%d joints",
+                    len(joints),
+                )
                 warned = True
             frames.append(
                 type(f)(
@@ -79,7 +90,11 @@ class DexCapAdapter(KinematicSourceAdapter):
 
     # ---------- IK retargeting path ----------
     def _retarget_with_ik(
-        self, episode_dir: Path, metadata: TrajectoryMetadata, mjcf_path: Path, horizon: Optional[int]
+        self,
+        episode_dir: Path,
+        metadata: TrajectoryMetadata,
+        mjcf_path: Path,
+        horizon: Optional[int],
     ) -> KinematicTrajectory:
         import mujoco
         import numpy as np
@@ -97,7 +112,13 @@ class DexCapAdapter(KinematicSourceAdapter):
         data.qpos[: model.nq] = q_home
         mujoco.mj_forward(model, data)
         site_home = data.site_xpos[siteid].copy()
-        frame_dirs = sorted([p for p in episode_dir.iterdir() if p.is_dir() and p.name.startswith("frame_")])
+        frame_dirs = sorted(
+            [
+                p
+                for p in episode_dir.iterdir()
+                if p.is_dir() and p.name.startswith("frame_")
+            ]
+        )
         if horizon:
             frame_dirs = frame_dirs[:horizon]
         if not frame_dirs:
@@ -130,7 +151,9 @@ class DexCapAdapter(KinematicSourceAdapter):
                 from scipy.signal import savgol_filter  # type: ignore
 
                 # axis=0 handles vector rows
-                return savgol_filter(vals, kernel_length=kernel, polyorder=poly, axis=0, mode="nearest")
+                return savgol_filter(
+                    vals, kernel_length=kernel, polyorder=poly, axis=0, mode="nearest"
+                )
             except Exception:
                 pad = kernel // 2
                 padded = np.pad(vals, ((pad, pad), (0, 0)), mode="edge")
@@ -164,7 +187,11 @@ class DexCapAdapter(KinematicSourceAdapter):
             target_pos[2] = max(target_pos[2], z_min)
             prev_pos = target_pos.copy()
 
-            yaw = yaws[idx] if (fix_normal and follow_yaw) else (yaws[0] if len(yaws) else 0.0)
+            yaw = (
+                yaws[idx]
+                if (fix_normal and follow_yaw)
+                else (yaws[0] if len(yaws) else 0.0)
+            )
             if not follow_yaw:
                 yaw = 0.0  # keep constant orientation to reduce drift
             cy, sy = math.cos(yaw), math.sin(yaw)
@@ -193,6 +220,7 @@ class DexCapAdapter(KinematicSourceAdapter):
 
 def _load_pose_matrix(path: Path):
     import numpy as np
+
     vals = np.fromstring(path.read_text(), sep=" ")
     if vals.size != 16:
         raise ValueError(f"{path} expected 16 floats (4x4), got {vals.size}")
@@ -233,18 +261,33 @@ def _rot_to_quat(R):
 
 def _so3_log(R):
     import numpy as np
+
     cos_theta = (np.trace(R) - 1.0) * 0.5
     cos_theta = np.clip(cos_theta, -1.0, 1.0)
     theta = math.acos(cos_theta)
     if theta < 1e-6:
         return np.zeros(3)
-    axis = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]]) / (2.0 * math.sin(theta))
+    axis = np.array([R[2, 1] - R[1, 2], R[0, 2] - R[2, 0], R[1, 0] - R[0, 1]]) / (
+        2.0 * math.sin(theta)
+    )
     return axis * theta
 
 
-def _ik_solve(model, siteid, target_pos, target_rot, init_q, iters=200, pos_tol=1e-4, rot_tol=1e-3, step_size=0.15, damping=1e-4):
+def _ik_solve(
+    model,
+    siteid,
+    target_pos,
+    target_rot,
+    init_q,
+    iters=200,
+    pos_tol=1e-4,
+    rot_tol=1e-3,
+    step_size=0.15,
+    damping=1e-4,
+):
     import numpy as np
     import mujoco
+
     data = mujoco.MjData(model)
     q = init_q.copy()
     jrange = model.jnt_range[:7]
@@ -264,7 +307,9 @@ def _ik_solve(model, siteid, target_pos, target_rot, init_q, iters=200, pos_tol=
         mujoco.mj_jacSite(model, data, jacp, jacr, siteid)
         J = np.vstack([jacp[:, :7], jacr[:, :7]])
         H = J.T @ J + damping * np.eye(7)
-        dq = np.linalg.solve(H, J.T @ np.concatenate([pos_err, rot_err_vec]) * step_size)
+        dq = np.linalg.solve(
+            H, J.T @ np.concatenate([pos_err, rot_err_vec]) * step_size
+        )
         dq = np.clip(dq, -dq_max, dq_max)
         q_candidate = q + dq
         q = alpha_q * q_candidate + (1 - alpha_q) * q
@@ -275,13 +320,16 @@ def _ik_solve(model, siteid, target_pos, target_rot, init_q, iters=200, pos_tol=
 def _slerp_so3(R0, R1, alpha):
     """Interpolate two rotation matrices via log/exp."""
     import numpy as np
+
     log_delta = _so3_log(R1 @ R0.T)
     delta = np.linalg.norm(log_delta)
     if delta < 1e-8:
         return R1
     axis = log_delta / delta
     theta = alpha * delta
-    K = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    K = np.array(
+        [[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]]
+    )
     R_delta = np.eye(3) + math.sin(theta) * K + (1 - math.cos(theta)) * (K @ K)
     return R_delta @ R0
 
@@ -293,7 +341,11 @@ def _find_dexcap_episode_dirs(root: Path, clip_filter: Iterable[str]) -> list[Pa
             continue
         if clip_filter and not any(token in path.name for token in clip_filter):
             continue
-        if any(child.name.startswith("frame_") for child in path.iterdir() if child.is_dir()):
+        if any(
+            child.name.startswith("frame_")
+            for child in path.iterdir()
+            if child.is_dir()
+        ):
             episodes.append(path)
     return sorted(episodes)
 

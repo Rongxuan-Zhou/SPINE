@@ -68,11 +68,15 @@ def analyze_dataset(root: str, urdf: str, frame: str, table_height: float):
     print(f"  Trajectories analyzed : {total}")
     print(f"  Mean(force) overall   : {mean_force_all:.3f} N")
     print(f"  Mean(max force)       : {max_force_all:.3f} N")
-    print(f"  Inpainting rate       : {inpainted}/{total} "
-          f"({100*inpainted/total:.1f}%)  [max force > 0.5N]")
+    print(
+        f"  Inpainting rate       : {inpainted}/{total} "
+        f"({100*inpainted/total:.1f}%)  [max force > 0.5N]"
+    )
     print(f"  Zero-force trajectories: {zero_force_count}")
-    print(f"  Residual penetration  : {residual_penetration} "
-          f"traj with z_min < table({table_height})")
+    print(
+        f"  Residual penetration  : {residual_penetration} "
+        f"traj with z_min < table({table_height})"
+    )
     print("")
 
 

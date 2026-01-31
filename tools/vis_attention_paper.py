@@ -25,7 +25,13 @@ def seed_everything(seed=42):
     torch.backends.cudnn.benchmark = False
 
 
-def generate_paper_evidence(ckpt_path, save_dir="results/attention_plots", force_mean=1.585, force_std=2.0, force_contact=5.0):
+def generate_paper_evidence(
+    ckpt_path,
+    save_dir="results/attention_plots",
+    force_mean=1.585,
+    force_std=2.0,
+    force_contact=5.0,
+):
     os.makedirs(save_dir, exist_ok=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"🔍 Analyzing Checkpoint: {ckpt_path}")
@@ -58,7 +64,11 @@ def generate_paper_evidence(ckpt_path, save_dir="results/attention_plots", force
                 if attn_tensor is None:
                     print("No attention recorded.")
                     return
-                attn_map = attn_tensor[-1][0] if attn_tensor[-1].dim() == 3 else attn_tensor[-1]
+                attn_map = (
+                    attn_tensor[-1][0]
+                    if attn_tensor[-1].dim() == 3
+                    else attn_tensor[-1]
+                )
                 attn_runs.append(attn_map[2:, 1].cpu().numpy())  # Action->Force
 
         attn_runs = np.stack(attn_runs, axis=0)
@@ -68,15 +78,37 @@ def generate_paper_evidence(ckpt_path, save_dir="results/attention_plots", force
         plt.subplot(1, 2, i + 1)
         x = np.arange(1, len(mean_attn) + 1)
         color = "tab:red" if i == 1 else "tab:blue"
-        plt.plot(x, mean_attn, linestyle="--", marker="o", color=color, linewidth=2, label="Mean Attn")
-        plt.fill_between(x, mean_attn - std_attn, mean_attn + std_attn, color=color, alpha=0.2, label="±1 std")
+        plt.plot(
+            x,
+            mean_attn,
+            linestyle="--",
+            marker="o",
+            color=color,
+            linewidth=2,
+            label="Mean Attn",
+        )
+        plt.fill_between(
+            x,
+            mean_attn - std_attn,
+            mean_attn + std_attn,
+            color=color,
+            alpha=0.2,
+            label="±1 std",
+        )
         plt.title(f"Scenario: {scenario}\n(Force Input = {force_tensor.item():.2f})")
         plt.xlabel("Predicted Action Step (T+1 to T+16)")
         plt.ylabel("Attention Weight to Force Token")
         plt.ylim(0, 0.2)
         plt.grid(True, alpha=0.3)
         avg_attn = float(mean_attn.mean())
-        plt.text(8, 0.18, f"Avg Attn: {avg_attn:.4f}", ha="center", fontsize=12, fontweight="bold")
+        plt.text(
+            8,
+            0.18,
+            f"Avg Attn: {avg_attn:.4f}",
+            ha="center",
+            fontsize=12,
+            fontweight="bold",
+        )
         plt.legend()
 
     plt.tight_layout()
@@ -138,8 +170,8 @@ def hunt_for_best_ckpt():
         local_best_seed = -1
         base_action = torch.randn(1, 16, 9, device=device)
         t = torch.zeros(1, device=device)
-        force_free = torch.tensor([[-0.79]], device=device)   # ~0N
-        force_contact = torch.tensor([[1.96]], device=device) # ~5N
+        force_free = torch.tensor([[-0.79]], device=device)  # ~0N
+        force_contact = torch.tensor([[1.96]], device=device)  # ~5N
 
         for seed in range(20):
             torch.manual_seed(seed)
