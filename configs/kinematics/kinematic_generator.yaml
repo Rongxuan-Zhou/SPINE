@@ -1,0 +1,28 @@
+output_dir: data/kinematics
+max_trajectories: 200  # 扩产到 200 条
+mimicgen:
+  dataset_root: data/mimicgen
+  max_augmentations_per_demo: 2
+  dexcap_mixture_ratio: 0.0
+  # 物体位姿随机化示例（如生成器支持请保留/调整）
+  object_init_pose_randomization: true
+  episodes_per_object: 1
+  pose_noise_xy: 0.05
+  pose_noise_z: 0.02
+  yaw_noise_deg: 10.0
+  augmentations:
+    position_noise_m: 0.01
+    rotation_noise_deg: 2.0
+    time_warp_factor: 0.05
+r2r2r: null
+dexcap:
+  dataset_root: /data/dexcap/rawdata_wipe_1-14/save_wipe_1-14
+  clip_filter: []
+  use_ik: true
+  mjcf_path: /home/rongxuan_zhou/mujoco_menagerie/franka_fr3/fr3.xml
+  frame_dt: 0.033
+  ik_horizon: 400
+  augmentations:
+    position_noise_m: 0.01
+    rotation_noise_deg: 2.0
+    time_warp_factor: 0.05
