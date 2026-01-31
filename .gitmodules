@@ -1,0 +1,24 @@
+[submodule "external/real2render2real"]
+	path = external/real2render2real
+	url = https://github.com/uynitsuj/real2render2real
+[submodule "external/mimicgen"]
+	path = external/mimicgen
+	url = https://github.com/NVlabs/mimicgen
+[submodule "external/robocasa"]
+	path = external/robocasa
+	url = https://github.com/robocasa/robocasa
+[submodule "external/DexCap"]
+	path = external/DexCap
+	url = https://github.com/j96w/DexCap
+[submodule "external/cito"]
+	path = external/cito
+	url = https://github.com/aykutonol/cito
+[submodule "external/franka_description"]
+	path = external/franka_description
+	url = https://github.com/frankarobotics/franka_description
+[submodule "external/deoxys_control"]
+	path = external/deoxys_control
+	url = https://github.com/UT-Austin-RPL/deoxys_control.git
+[submodule "external/franka_ros2"]
+	path = external/franka_ros2
+	url = https://github.com/frankarobotics/franka_ros2
