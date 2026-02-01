@@ -21,10 +21,13 @@ def _read_json(path: Path) -> Mapping[str, object]:
 def _as_floats(values: Iterable[object]) -> List[float]:
     floats: List[float] = []
     for val in values:
-        try:
-            floats.append(float(val))
-        except (TypeError, ValueError) as exc:
-            raise ValueError(f"无法将 {val!r} 转换为浮点数") from exc
+        if isinstance(val, (int, float, str)):
+            try:
+                floats.append(float(val))
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"无法将 {val!r} 转换为浮点数") from exc
+        else:
+            raise ValueError(f"无法将 {val!r} 转换为浮点数")
     return floats
 
 
