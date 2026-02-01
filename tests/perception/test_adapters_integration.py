@@ -30,22 +30,17 @@ def _write_r2r2r_json(path: Path) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
-def _write_dexcap_json(path: Path) -> None:
-    payload = {
-        "frames": [
-            {
-                "timestamp": 0.0,
-                "end_effector_pose": [0, 0, 0, 0, 0, 0, 1],
-                "joint_positions": [0.3] * 7,
-            },
-            {
-                "timestamp": 0.04,
-                "end_effector_pose": [0.01, 0, 0, 0, 0, 0, 1],
-                "joint_positions": [0.4] * 7,
-            },
-        ]
-    }
-    path.write_text(json.dumps(payload), encoding="utf-8")
+def _write_dexcap_episode(root: Path) -> Path:
+    episode_dir = root / "episode_01"
+    episode_dir.mkdir(parents=True, exist_ok=True)
+    for idx, joints in enumerate(([0.3] * 7, [0.4] * 7)):
+        frame_dir = episode_dir / f"frame_{idx:04d}"
+        frame_dir.mkdir(parents=True, exist_ok=True)
+        (frame_dir / "pose_2.txt").write_text("0 0 0 0 0 0 1", encoding="utf-8")
+        (frame_dir / "right_hand_joint.txt").write_text(
+            " ".join(str(x) for x in joints), encoding="utf-8"
+        )
+    return episode_dir
 
 
 @pytest.fixture(autouse=True)
@@ -72,8 +67,7 @@ def test_r2r2r_adapter_and_generator(tmp_path: Path) -> None:
 
 
 def test_dexcap_adapter_and_generator(tmp_path: Path) -> None:
-    clip_path = tmp_path / "clip_dexcap.json"
-    _write_dexcap_json(clip_path)
+    _write_dexcap_episode(tmp_path)
     adapter = DexCapAdapter(DexCapConfig(dataset_root=tmp_path))
     generator = KinematicGenerator(
         output_dir=tmp_path / "out_dexcap", adapters=[adapter], max_trajectories=None

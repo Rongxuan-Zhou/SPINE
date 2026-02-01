@@ -11,13 +11,13 @@ from spine.perception.kinematics.fr3_mapping import (
 
 def test_fr3_joint_order_length() -> None:
     assert FR3_JOINT_NAMES == [
-        "joint1",
-        "joint2",
-        "joint3",
-        "joint4",
-        "joint5",
-        "joint6",
-        "joint7",
+        "fr3_joint1",
+        "fr3_joint2",
+        "fr3_joint3",
+        "fr3_joint4",
+        "fr3_joint5",
+        "fr3_joint6",
+        "fr3_joint7",
     ]
     validate_fr3_joint_positions([0] * 7)
     with pytest.raises(ValueError):
