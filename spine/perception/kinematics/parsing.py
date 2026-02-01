@@ -36,9 +36,7 @@ def _extract_first(
             value = mapping[key]
             if isinstance(value, (int, float, str)):
                 return float(value)
-            raise ValueError(
-                f"时间戳字段 {key} 不是可转换的数值类型: {value!r}"
-            )
+            raise ValueError(f"时间戳字段 {key} 不是可转换的数值类型: {value!r}")
     if default is None:
         raise KeyError(f"未找到时间戳键 {keys}")
     return default
