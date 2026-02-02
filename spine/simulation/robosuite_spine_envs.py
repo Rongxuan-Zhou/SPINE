@@ -29,10 +29,12 @@ class ContactTuning:
 
 @dataclass
 class RealityScaling:
-    """Scaling config for peg/nut size and tolerance."""
+    """Scaling config for peg/nut size and clearance enforcement."""
 
     target_side_m: float = 0.02
-    tolerance_m: float = 0.001
+    target_clearance_min_m: float = 0.0005
+    target_clearance_max_m: float = 0.001
+    target_clearance_m: float = 0.0008
 
 
 class SpineXMLMixin:
@@ -51,7 +53,8 @@ class SpineXMLMixin:
     # ---- Public hook requested in spec ----
     def _modify_xml_for_reality(self, xml_root: ET.Element) -> None:
         """Applies scaling, tolerance, and friction overrides to task assets."""
-        self._scale_nut_and_peg(xml_root)
+        self._apply_target_side(xml_root)
+        self._enforce_tight_tolerance(xml_root)
         self._override_friction(xml_root)
 
     # ---- Helpers ----
@@ -67,10 +70,31 @@ class SpineXMLMixin:
             tuning=self.contact_tuning,
         )
 
-    def _scale_nut_and_peg(self, root: ET.Element) -> None:
+    def _apply_target_side(self, root: ET.Element) -> None:
         target_half = self.reality_scaling.target_side_m / 2.0
-        peg_half = target_half + self.reality_scaling.tolerance_m / 2.0
-        nut_half = target_half + self.reality_scaling.tolerance_m
+        for geom in root.findall(".//geom"):
+            name = geom.get("name", "")
+            if "square_peg" in name or name.startswith("peg"):
+                size = _parse_vec(geom.get("size"))
+                if size is None or len(size) != 3:
+                    continue
+                size[0] = max(
+                    1e-4, target_half - self.reality_scaling.target_clearance_m / 2.0
+                )
+                size[1] = size[0]
+                geom.set("size", _fmt_vec(size))
+            if "square_nut" in name or "SquareNut" in name:
+                size = _parse_vec(geom.get("size"))
+                if size is None or len(size) != 3:
+                    continue
+                size[0] = target_half
+                size[1] = target_half
+                geom.set("size", _fmt_vec(size))
+
+    def _enforce_tight_tolerance(self, root: ET.Element) -> None:
+        """Tighten clearance between peg and nut to target gap (0.5mm-1.0mm)."""
+        peg_geoms: list[ET.Element] = []
+        nut_geoms: list[ET.Element] = []
 
         for geom in root.findall(".//geom"):
             name = geom.get("name", "")
@@ -78,19 +102,48 @@ class SpineXMLMixin:
             if gtype != "box":
                 continue
             if "square_peg" in name or name.startswith("peg"):
-                size = _parse_vec(geom.get("size"))
-                if size is None or len(size) != 3:
-                    continue
-                size[0] = peg_half
-                size[1] = peg_half
-                geom.set("size", _fmt_vec(size))
+                peg_geoms.append(geom)
             if "square_nut" in name or "SquareNut" in name:
-                size = _parse_vec(geom.get("size"))
-                if size is None or len(size) != 3:
-                    continue
-                size[0] = nut_half
-                size[1] = nut_half
-                geom.set("size", _fmt_vec(size))
+                nut_geoms.append(geom)
+
+        if not peg_geoms or not nut_geoms:
+            return
+
+        # Use the first matching geom as reference.
+        peg_size = _parse_vec(peg_geoms[0].get("size"))
+        nut_size = _parse_vec(nut_geoms[0].get("size"))
+        if peg_size is None or nut_size is None:
+            return
+
+        peg_half = float(peg_size[0])
+        nut_half = float(nut_size[0])
+        target_gap = float(self.reality_scaling.target_clearance_m)
+        target_gap = max(
+            self.reality_scaling.target_clearance_min_m,
+            min(self.reality_scaling.target_clearance_max_m, target_gap),
+        )
+
+        target_half = (peg_half + nut_half) / 2.0
+        peg_half_new = max(1e-4, target_half - target_gap / 2.0)
+        nut_half_new = max(
+            peg_half_new + target_gap / 2.0, target_half + target_gap / 2.0
+        )
+
+        for geom in peg_geoms:
+            size = _parse_vec(geom.get("size"))
+            if size is None or len(size) != 3:
+                continue
+            size[0] = peg_half_new
+            size[1] = peg_half_new
+            geom.set("size", _fmt_vec(size))
+
+        for geom in nut_geoms:
+            size = _parse_vec(geom.get("size"))
+            if size is None or len(size) != 3:
+                continue
+            size[0] = nut_half_new
+            size[1] = nut_half_new
+            geom.set("size", _fmt_vec(size))
 
     def _override_friction(self, root: ET.Element) -> None:
         for geom in root.findall(".//geom"):
@@ -138,16 +191,21 @@ class SpineNutAssemblySquare(SpineXMLMixin, Square_D0):
         worldbody = root.find("worldbody")
         if worldbody is None:
             return
-        table_z = self.table_offset[2]
-        peg_pos = _find_body_pos(root, ("peg1", "square_peg"))
-        if peg_pos is None:
-            peg_pos = np.array([0.0, 0.0, table_z])
-        offset = np.array([0.08, 0.0, 0.0])
-        riser_size = np.array([0.04, 0.04, 0.02])
-        riser_pos = peg_pos + offset
-        riser_pos[2] = table_z + riser_size[2]
+        peg_body = _find_body(root, ("peg1", "square_peg"))
+        riser_size = np.array([0.05, 0.05, 0.02])
+        riser_offset = np.array([0.0, -0.14, -0.02])
+
+        parent = peg_body if peg_body is not None else worldbody
+        if peg_body is None:
+            peg_pos = _find_body_pos(root, ("peg1", "square_peg"))
+            if peg_pos is None:
+                peg_pos = np.array([0.0, 0.0, self.table_offset[2]])
+            riser_pos = peg_pos + riser_offset
+        else:
+            riser_pos = riser_offset
+
         riser = ET.SubElement(
-            worldbody,
+            parent,
             "geom",
             {
                 "name": "fixture_riser",
@@ -175,20 +233,29 @@ class SpineThreading(SpineXMLMixin, Threading_D0):
         worldbody = root.find("worldbody")
         if worldbody is None:
             return
-        table_z = self.table_offset[2]
-        tripod_pos = _find_body_pos(root, ("ring_tripod", "tripod", "ring"))
-        if tripod_pos is None:
-            tripod_pos = np.array([0.0, 0.0, table_z])
-        bar_pos = tripod_pos + np.array([0.0, -0.06, 0.08])
+        tripod_body = _find_body(root, ("tripod_obj", "ring_tripod", "tripod", "ring"))
+        bar_offset = np.array([-0.13, 0.0, -0.04])
+        bar_size = (0.02, 0.10, 0.02)
+
+        parent = tripod_body if tripod_body is not None else worldbody
+        if tripod_body is None:
+            hole_pos = _find_body_pos(
+                root, ("tripod_obj", "ring_tripod", "tripod", "ring")
+            )
+            if hole_pos is None:
+                hole_pos = np.array([0.0, 0.0, self.table_offset[2]])
+            bar_pos = hole_pos + bar_offset
+        else:
+            bar_pos = bar_offset
+
         bar = ET.SubElement(
-            worldbody,
+            parent,
             "geom",
             {
                 "name": "fixture_rest_bar",
-                "type": "cylinder",
-                "size": _fmt_vec((0.01, 0.06)),
+                "type": "box",
+                "size": _fmt_vec(bar_size),
                 "pos": _fmt_vec(bar_pos),
-                "quat": "0.7071 0 0.7071 0",
                 "rgba": "0.5 0.5 0.5 1",
             },
         )
@@ -203,12 +270,20 @@ def _apply_contact_params(geom: ET.Element, tuning: ContactTuning) -> None:
 
 
 def _find_body_pos(root: ET.Element, names: Iterable[str]) -> Optional[np.ndarray]:
+    body = _find_body(root, names)
+    if body is None:
+        return None
+    pos = _parse_vec(body.get("pos"))
+    if pos is None:
+        return None
+    return np.array(pos)
+
+
+def _find_body(root: ET.Element, names: Iterable[str]) -> Optional[ET.Element]:
     for body in root.findall(".//body"):
         name = body.get("name", "")
         if any(token in name for token in names):
-            pos = _parse_vec(body.get("pos"))
-            if pos is not None:
-                return np.array(pos)
+            return body
     return None
 
 
