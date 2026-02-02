@@ -63,6 +63,39 @@ def _get_fixture_height(env, geom_name: str) -> float | None:
     return float(geom_pos[2] + geom_size[2])
 
 
+def _get_fixture_pos(env, geom_name: str) -> np.ndarray | None:
+    try:
+        geom_id = env.sim.model.geom_name2id(geom_name)
+    except Exception:
+        return None
+    return env.sim.data.geom_xpos[geom_id].copy()
+
+
+def _move_eef_towards(
+    env, target: np.ndarray, steps: int = 80, gain: float = 3.0
+) -> None:
+    for _ in range(steps):
+        eef_pos, _ = _get_eef_pose(env)
+        delta = target - eef_pos
+        action = np.zeros(7, dtype=np.float32)
+        action[:3] = np.clip(gain * delta, -0.05, 0.05)
+        action[-1] = -1.0
+        env.step(action)
+
+
+def _approach_fixture(env, task: str) -> bool:
+    if task == "square":
+        fixture = _get_fixture_pos(env, "fixture_riser")
+    else:
+        fixture = _get_fixture_pos(env, "fixture_rest_bar")
+    if fixture is None:
+        return False
+    target = fixture.copy()
+    target[2] += 0.06
+    _move_eef_towards(env, target, steps=120, gain=2.5)
+    return True
+
+
 def _teleport_object_to_gripper(env, body_id: int, z_min: float) -> None:
     eef_pos, eef_quat = _get_eef_pose(env)
     target_pos = eef_pos.copy()
@@ -211,6 +244,8 @@ def run_episode(
     ee_target = ee_pos0.copy()
     ee_target[2] -= 0.08
 
+    fixture_approached = _approach_fixture(env, task)
+
     # Guarded descent
     contact_reached = _guarded_descent(env, sigma, force_threshold)
     policy = _policy_spine(task)
@@ -249,6 +284,7 @@ def run_episode(
         "contact_force_wrist": contact_forces,
         "joint_torque_integral": torque_energy / env.control_freq,
         "guarded_contact": contact_reached,
+        "fixture_approached": fixture_approached,
     }
     return result
 
