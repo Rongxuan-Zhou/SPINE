@@ -10,6 +10,7 @@ from typing import Callable
 
 import numpy as np
 import robosuite as suite
+import robosuite.utils.transform_utils as T
 from robosuite.controllers import load_controller_config
 
 from spine.simulation.robosuite_spine_envs import SpineNutAssemblySquare, SpineThreading
@@ -34,7 +35,11 @@ def _get_eef_pose(env) -> tuple[np.ndarray, np.ndarray]:
     robot = env.robots[0]
     site_id = robot.eef_site_id
     pos = env.sim.data.site_xpos[site_id].copy()
-    quat = env.sim.data.site_xquat[site_id].copy()
+    if hasattr(env.sim.data, "site_xquat"):
+        quat = env.sim.data.site_xquat[site_id].copy()
+    else:
+        mat = env.sim.data.site_xmat[site_id].reshape(3, 3)
+        quat = T.convert_quat(T.mat2quat(mat), to="wxyz")
     return pos, quat
 
 
