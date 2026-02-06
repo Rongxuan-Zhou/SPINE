@@ -1,0 +1,52 @@
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+include = "\\.pyi?$"
+exclude = '''
+/(
+    external
+  | data
+  | results
+  | logs
+  | wandb
+  | ros2_ws
+  | \.venv
+  | \.venv_.*
+  | docs/reference
+  | docs/pics
+)
+/'''
+
+[tool.ruff]
+line-length = 88
+exclude = [
+    "external",
+    "data",
+    "results",
+    "docs/reference",
+    "docs/pics",
+    "logs",
+    "wandb",
+    "ros2_ws",
+    ".venv",
+    ".venv_*",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "I001"]
+
+[tool.ruff.lint.per-file-ignores]
+"tools/*.py" = ["E402", "F401", "F841"]
+"scripts/*.py" = ["E402", "F401", "F841"]
+"tests/conftest.py" = ["E402"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gpu: marks tests that require GPU",
+    "hardware: marks tests that require hardware",
+]
+testpaths = [
+    "tests",
+]

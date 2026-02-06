@@ -1,0 +1,11 @@
+# Development dependencies for SPINE.
+pytest==8.4.2
+pyyaml==6.0.2
+h5py==3.14.0
+
+# Optional adapter dependencies (install via editable clones under external/).
+# -e external/real2render2real  # https://github.com/uynitsuj/real2render2real
+# -e external/mimicgen          # https://github.com/NVlabs/mimicgen
+# -e external/DexCap            # https://github.com/j96w/DexCap
+# -e external/robocasa          # https://github.com/robocasa/robocasa
+# -e external/cito              # https://github.com/aykutonol/cito
