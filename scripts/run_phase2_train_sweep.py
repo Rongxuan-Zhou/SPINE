@@ -39,7 +39,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--loss-phys-weight", type=float, default=0.5)
     parser.add_argument("--contact-force-threshold", type=float, default=2.0)
     parser.add_argument("--force-mag-clip", type=float, default=50.0)
-    parser.add_argument("--ckpt-root", type=Path, default=Path("data/checkpoints_threading"))
+    parser.add_argument(
+        "--ckpt-root",
+        type=Path,
+        default=Path("data/checkpoints_threading_rgb_inpaint"),
+    )
     parser.add_argument(
         "--skip-existing",
         action="store_true",

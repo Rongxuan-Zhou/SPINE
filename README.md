@@ -1,3 +1,5 @@
+codex resume 019c31aa-63ab-7961-97c2-f0e5a9dc14a8
+
 **TL;DR（2–3句）**你现在这篇 SPINE 的“正确版本”不是补全 Ground Truth 力，而是用 Tuning‑Free CITO 作为离线
 Physics Tokenizer，把 MimicGen 数据里的 Physical Fallacies（物理谬误）转成一套自洽因果解释（Self‑consistent
 Causal Explanation），并通过 **Refine（提纯）+ Rescue（拯救）**同时提升监督信号质量与有效数据覆盖率。项目成
@@ -124,90 +126,59 @@ Option D：机制优先（先最小 inpainting，再扩 token 复杂度）
 
 1. 成功/失败数量统计（用于确认 Wave‑2/Wave‑1 规模与 Rescue 必要性）
    ![Phase 1 Success vs Failed](artifacts/2026-02-04_phase1/phase1_success_failure_counts.png)
-   
-   **图 1 解读（结论紧跟图）**  
-   **一句话证明**：三任务均具备 “≥1k 成功 + 足量失败” 的两波数据规模，Rescue（Wave‑1）在统计意义上可做且可量化。  
-   **指标/定义**：对每个任务分别统计两类轨迹数量。`demo.hdf5` 记为 Wave‑2（success）；`demo_failed.hdf5` 记为 Wave‑1（failed，开启 keep_failed 后保留的失败尝试）。  
-   **读图要点**：柱状图的 y 轴是轨迹条数（Trajectories），蓝色为成功，橙色为失败。  
-   **结论**：三任务均达到 `1000` 条成功轨迹，且保留了足量失败轨迹：coffee `1000/213`、square `1000/302`、threading `1000/877`（success/failed）。这意味着：  
-   (1) Wave‑2 的规模足以做 Refine（提纯）并训练/评估；  
-   (2) Wave‑1 的规模足以做 Rescue（拯救）并量化“救回率/质量”，而不是只拿少量失败例子讲故事；  
-   (3) threading 的失败样本异常充足，最适合用来检验 Rescue 是否能把“覆盖”变成“可用数据”。  
+
+   **图 1 解读（结论紧跟图）****一句话证明**：三任务均具备 “≥1k 成功 + 足量失败” 的两波数据规模，Rescue（Wave‑1）在统计意义上可做且可量化。**指标/定义**：对每个任务分别统计两类轨迹数量。`demo.hdf5` 记为 Wave‑2（success）；`demo_failed.hdf5` 记为 Wave‑1（failed，开启 keep_failed 后保留的失败尝试）。**读图要点**：柱状图的 y 轴是轨迹条数（Trajectories），蓝色为成功，橙色为失败。**结论**：三任务均达到 `1000` 条成功轨迹，且保留了足量失败轨迹：coffee `1000/213`、square `1000/302`、threading `1000/877`（success/failed）。这意味着：(1) Wave‑2 的规模足以做 Refine（提纯）并训练/评估；(2) Wave‑1 的规模足以做 Rescue（拯救）并量化“救回率/质量”，而不是只拿少量失败例子讲故事；(3) threading 的失败样本异常充足，最适合用来检验 Rescue 是否能把“覆盖”变成“可用数据”。
 2. Force 高频能量分布（用于证明 Sim‑Force 的高频伪影）
    ![Phase 1 Force HF Energy](artifacts/2026-02-04_phase1/phase1_force_hf_energy.png)
-   
-   **图 2 解读（结论紧跟图）**  
-   **一句话证明**：Sim‑Force 存在显著且任务相关的高频抖动成分，并且与成功/失败不呈单调关系（非“失败标签”）。  
-   **指标/公式**：末端 6D wrench 只取力 `f_t = wrench_t[:3]`（单位 N），力范数 `Force_t = ||f_t||_2`。为压低“无接触地板噪声/偏置”，做基线校正：  
-   `b = p10(Force)`（全轨迹 10 分位数），`Force_adj,t = max(Force_t - b, 0)`。  
-   “高频能量”定义为离散一阶差分的平方均值：`HF = mean_t (ΔForce_adj,t)^2`，其中 `ΔForce_adj,t = Force_adj,t+1 - Force_adj,t`。它刻画的是“相邻步之间力变化的抖动/尖峰强度”（注意该数值随采样率/控制频率变化，不是跨系统可直接比的物理常数）。  
-   **读图要点**：箱线图按任务分组、按 success/failed 分颜色；中位数（红线）越高，表示该组更“抖/尖”。  
-   **结论（均值）**：HF 能量显著非零且任务差异极强：square 量级远高于 coffee/threading（success/fail 均值：square `300.9/290.0` vs coffee `43.4/52.8` vs threading `46.8/33.4`）。更关键的是：success 与 failed 的关系不单调（coffee：fail 更高；square：接近；threading：fail 更低），说明力信号包含大量控制器/接触求解动态成分，而不是“失败标签”的简单函数——这就是你要攻击的 **Sim‑Force 高频伪影（Reactive Artifacts）**。  
+
+   **图 2 解读（结论紧跟图）****一句话证明**：Sim‑Force 存在显著且任务相关的高频抖动成分，并且与成功/失败不呈单调关系（非“失败标签”）。**指标/公式**：末端 6D wrench 只取力 `f_t = wrench_t[:3]`（单位 N），力范数 `Force_t = ||f_t||_2`。为压低“无接触地板噪声/偏置”，做基线校正：`b = p10(Force)`（全轨迹 10 分位数），`Force_adj,t = max(Force_t - b, 0)`。“高频能量”定义为离散一阶差分的平方均值：`HF = mean_t (ΔForce_adj,t)^2`，其中 `ΔForce_adj,t = Force_adj,t+1 - Force_adj,t`。它刻画的是“相邻步之间力变化的抖动/尖峰强度”（注意该数值随采样率/控制频率变化，不是跨系统可直接比的物理常数）。**读图要点**：箱线图按任务分组、按 success/failed 分颜色；中位数（红线）越高，表示该组更“抖/尖”。**结论（均值）**：HF 能量显著非零且任务差异极强：square 量级远高于 coffee/threading（success/fail 均值：square `300.9/290.0` vs coffee `43.4/52.8` vs threading `46.8/33.4`）。更关键的是：success 与 failed 的关系不单调（coffee：fail 更高；square：接近；threading：fail 更低），说明力信号包含大量控制器/接触求解动态成分，而不是“失败标签”的简单函数——这就是你要攻击的 **Sim‑Force 高频伪影（Reactive Artifacts）**。
 3. 轨迹长度分布（用于确认任务时长差异与数据尺度）
    ![Phase 1 Trajectory Length](artifacts/2026-02-04_phase1/phase1_traj_length.png)
-   
-   **图 3 解读（结论紧跟图）**  
-   **一句话证明**：轨迹时长分布与任务流程复杂度一致，失败轨迹并非被早停主导，Wave‑1 含大量可救的有效片段。  
-   **指标/定义**：轨迹长度 `T` 为每条 demo 的 timestep 数（steps）。  
-   **读图要点**：箱线图对比不同任务/不同成败波次的长度分布。  
-   **结论（均值）**：长度与任务复杂度/流程长度一致：coffee 与 threading 平均长度约 `220` steps（coffee success/fail `217.7/222.8`；threading `220.4/220.7`），square 更短约 `154–160` steps（success/fail `153.7/160.0`）。成功与失败的长度差异整体不大（square 失败略长），说明失败不是被“大量早停/极短轨迹”主导；Wave‑1 里更可能包含大量“接近成功但在接触/几何上翻车”的片段，这恰好是 Rescue 最有价值的对象。  
+
+   **图 3 解读（结论紧跟图）****一句话证明**：轨迹时长分布与任务流程复杂度一致，失败轨迹并非被早停主导，Wave‑1 含大量可救的有效片段。**指标/定义**：轨迹长度 `T` 为每条 demo 的 timestep 数（steps）。**读图要点**：箱线图对比不同任务/不同成败波次的长度分布。**结论（均值）**：长度与任务复杂度/流程长度一致：coffee 与 threading 平均长度约 `220` steps（coffee success/fail `217.7/222.8`；threading `220.4/220.7`），square 更短约 `154–160` steps（success/fail `153.7/160.0`）。成功与失败的长度差异整体不大（square 失败略长），说明失败不是被“大量早停/极短轨迹”主导；Wave‑1 里更可能包含大量“接近成功但在接触/几何上翻车”的片段，这恰好是 Rescue 最有价值的对象。
 4. Contact ratio 分布（用于量化接触段比例与任务难度差异）
    ![Phase 1 Contact Ratio](artifacts/2026-02-04_phase1/phase1_contact_ratio.png)
-   
-   **图 4 解读（结论紧跟图）**  
-   **一句话证明**：接触占比主要由任务交互结构决定，而非由成功/失败单独决定（接触“占比”是任务主导变量）。  
-   **指标/公式（重要澄清）**：这里的 “Contact” 不是几何接触真值，而是一个力阈值代理：  
-   `Contact_t = 1[Force_adj,t > 5N]`，`Contact ratio = mean_t Contact_t`。  
-   因为 `Force_adj` 已做 `p10` 基线扣除，`5N` 更像“显著交互/显著接触段”的启发式阈值。  
-   **读图要点**：接触占比越高，表示轨迹中“Force_adj 持续超过阈值”的时间越长。  
-   **结论（均值）**：接触占比呈明显任务差异而非单纯由成功/失败决定：square 约 `22%`（success/fail `0.220/0.214`），coffee 约 `4.7%`（`0.047/0.079`，失败更高），threading 约 `1.7%`（`0.0166/0.0117`，失败略低）。因此“接触占比”主要刻画任务交互结构（square 需要更长的持续接触段；threading 多为稀疏接触），不能被当作“失败指示器”。这也解释了为什么你必须在 Phase 2 用一致性约束去提炼可学习的接触语义，而不是直接把 Sim‑Force 当监督。  
-**重点强调：**接触对齐 HF Energy 箱线图 + 接触对齐力时序曲线，是 Phase 1 中最有力的证据，直接支撑“Sim Force 包含反应式伪影”这一核心论点。  
+
+   **图 4 解读（结论紧跟图）****一句话证明**：接触占比主要由任务交互结构决定，而非由成功/失败单独决定（接触“占比”是任务主导变量）。**指标/公式（重要澄清）**：这里的 “Contact” 不是几何接触真值，而是一个力阈值代理：`Contact_t = 1[Force_adj,t > 5N]`，`Contact ratio = mean_t Contact_t`。因为 `Force_adj` 已做 `p10` 基线扣除，`5N` 更像“显著交互/显著接触段”的启发式阈值。**读图要点**：接触占比越高，表示轨迹中“Force_adj 持续超过阈值”的时间越长。**结论（均值）**：接触占比呈明显任务差异而非单纯由成功/失败决定：square 约 `22%`（success/fail `0.220/0.214`），coffee 约 `4.7%`（`0.047/0.079`，失败更高），threading 约 `1.7%`（`0.0166/0.0117`，失败略低）。因此“接触占比”主要刻画任务交互结构（square 需要更长的持续接触段；threading 多为稀疏接触），不能被当作“失败指示器”。这也解释了为什么你必须在 Phase 2 用一致性约束去提炼可学习的接触语义，而不是直接把 Sim‑Force 当监督。**重点强调：**接触对齐 HF Energy 箱线图 + 接触对齐力时序曲线，是 Phase 1 中最有力的证据，直接支撑“Sim Force 包含反应式伪影”这一核心论点。
 5. Contact-aligned HF energy 分布（接触起点 ±10 步，按轨迹均值，**仅统计发生接触的轨迹**）
    ![Phase 1 Contact-aligned HF](artifacts/2026-02-04_phase1/phase1_contact_aligned_hf_energy.png)
-   
-   **图 5 解读（结论紧跟图）**  
-   **一句话证明**：接触建立瞬间是高频伪影最集中的阶段，且其强度任务相关并与成败不单调对应。  
-   **指标/公式**：先用 `Contact_t = 1[Force_adj,t > 5N]` 找到每条轨迹中的“接触建立起点”集合  
-   `K = { k | Contact_k = 1 且 (k=0 或 Contact_{k-1}=0) }`。  
-   对每个起点 `k`，取窗口 `[k-10, k+10]`（共 21 点）的差分能量：  
-   `E_k = mean_{t=k-10..k+9} (Force_adj,t+1 - Force_adj,t)^2`。  
-   然后对每条轨迹把所有事件平均得到 `E_traj = mean_{k∈K} E_k`。**为避免 Air Miss Bias，仅保留 `|K|>0` 的轨迹参与分布**（抓空/未接触的失败轨迹会被剔除，而不是记为 0）。  
-   **读图要点**：这是最敏感的“伪影放大镜”，因为许多控制器/求解器抖动集中发生在接触建立/解除瞬间。  
-   **结论（均值）**：square 在接触起点附近的高频能量显著更高，且失败更重（`651.0/806.3`）；coffee 同样失败更高（`149.0/191.2`）；threading 则 success 更高（`478.2/414.0`），再次体现 success/fail 不单调。结合事件计数：接触起点事件数（success/fail）coffee `5011/1136`、square `4940/1118`、threading `1012/750`；threading 的事件更稀疏但一旦发生更“尖”，与其低接触占比（图 4）并不矛盾。  
-   **补充（剔除无接触轨迹的样本量）**：该图仅统计发生接触事件的轨迹（避免 Air Miss Bias）。对应轨迹数（success/fail）：coffee `994/1000` vs `213/213`；square `1000/1000` vs `302/302`；threading `628/1000` vs `524/877`。  
+
+   **图 5 解读（结论紧跟图）****一句话证明**：接触建立瞬间是高频伪影最集中的阶段，且其强度任务相关并与成败不单调对应。**指标/公式**：先用 `Contact_t = 1[Force_adj,t > 5N]` 找到每条轨迹中的“接触建立起点”集合`K = { k | Contact_k = 1 且 (k=0 或 Contact_{k-1}=0) }`。对每个起点 `k`，取窗口 `[k-10, k+10]`（共 21 点）的差分能量：`E_k = mean_{t=k-10..k+9} (Force_adj,t+1 - Force_adj,t)^2`。然后对每条轨迹把所有事件平均得到 `E_traj = mean_{k∈K} E_k`。**为避免 Air Miss Bias，仅保留 `|K|>0` 的轨迹参与分布**（抓空/未接触的失败轨迹会被剔除，而不是记为 0）。**读图要点**：这是最敏感的“伪影放大镜”，因为许多控制器/求解器抖动集中发生在接触建立/解除瞬间。**结论（均值）**：square 在接触起点附近的高频能量显著更高，且失败更重（`651.0/806.3`）；coffee 同样失败更高（`149.0/191.2`）；threading 则 success 更高（`478.2/414.0`），再次体现 success/fail 不单调。结合事件计数：接触起点事件数（success/fail）coffee `5011/1136`、square `4940/1118`、threading `1012/750`；threading 的事件更稀疏但一旦发生更“尖”，与其低接触占比（图 4）并不矛盾。**补充（剔除无接触轨迹的样本量）**：该图仅统计发生接触事件的轨迹（避免 Air Miss Bias）。对应轨迹数（success/fail）：coffee `994/1000` vs `213/213`；square `1000/1000` vs `302/302`；threading `628/1000` vs `524/877`。
 6. Contact-aligned 均值时序曲线（均值 ± 标准差）
    ![Phase 1 Contact-aligned Mean](artifacts/2026-02-04_phase1/phase1_contact_aligned_force_timeseries.png)
-   
-   **图 6 解读（结论紧跟图）**  
-   **一句话证明**：接触建立会触发系统性的力冲击与高方差抖动，且这种不稳定性在不同任务/成败间显著不同。  
-   **指标/公式**：对每个接触起点 `k`（同图 5 的定义），若其前后窗口完整存在（`k-10 ≥ 0` 且 `k+10 < T`），则取对齐窗口  
-   `w_k[τ] = Force_adj,k+τ`，其中 `τ ∈ {-10, …, 0, …, +10}`，并在所有窗口上计算逐偏移的均值与标准差：  
-   `μ[τ] = mean_k w_k[τ]`，`σ[τ] = std_k w_k[τ]`。图中阴影即 `μ ± σ`，竖虚线 `τ=0` 表示接触建立时刻。  
-   **读图要点**：如果 `τ=0` 附近出现尖峰/台阶，说明接触建立伴随冲击/控制器纠偏；若 `σ` 很大，说明该阶段高度不稳定、受数值/策略/几何误差影响强。  
-   **结论**：三任务在 `τ=0` 附近都出现“接触建立尖峰”，且失败（橙色）在 coffee/square 上整体更高、方差更大，符合“失败更可能伴随反复碰撞/卡住/纠偏”的解释；threading 的曲线显示接触建立后均值与方差长期维持在较高水平，反映其“稀疏接触但事件强、可复现性差”的特征。该图的核心意义是把图 5 的“高频能量”落回可解释的时序形态：你看到的不是“力越大越好/越坏”，而是接触建立瞬间的冲击与抖动模式。  
-   **补充（窗口数量）**：由于该图要求事件两侧 `±10` 步窗口完整，事件靠近轨迹起止处会被丢弃，因此实际用于统计的窗口数量略小于事件数：coffee `4902/1035`、square `4601/1098`、threading `1012/750`（success/fail）。  
 
-**Figure X: Contact Artifact Analysis（论文配图描述，可直接使用）**  
-**(Left) Contact-Aligned Force Profile：**展示接触发生瞬间的力均值与标准差（阴影）。  
-**观察：**接触瞬间伴随明显过冲（Overshoot）与震荡，呈典型 Sim Force Artifacts。  
-**(Right) High-Frequency Energy Distribution：**箱线图显示 success 与 failure 的高频能量（Diff^2）在接触主导任务（如 square）中高度重叠。  
-**结论：**即便仅保留“发生接触”的轨迹，高频震荡仍非失败特征，而是仿真器/控制器的系统性伪影。  
+   **图 6 解读（结论紧跟图）**
+   **一句话证明**：接触建立会触发系统性的力冲击与高方差抖动，且这种不稳定性在不同任务/成败间显著不同。
+   **指标/公式**：对每个接触起点 `k`（同图 5 的定义），若其前后窗口完整存在（`k-10 ≥ 0` 且 `k+10 < T`），则取对齐窗口
+   `w_k[τ] = Force_adj,k+τ`，其中 `τ ∈ {-10, …, 0, …, +10}`，并在所有窗口上计算逐偏移的均值与标准差：
+   `μ[τ] = mean_k w_k[τ]`，`σ[τ] = std_k w_k[τ]`。图中阴影即 `μ ± σ`，竖虚线 `τ=0` 表示接触建立时刻。
+   **读图要点**：如果 `τ=0` 附近出现尖峰/台阶，说明接触建立伴随冲击/控制器纠偏；若 `σ` 很大，说明该阶段高度不稳定、受数值/策略/几何误差影响强。
+   **结论**：三任务在 `τ=0` 附近都出现“接触建立尖峰”，且失败（橙色）在 coffee/square 上整体更高、方差更大，符合“失败更可能伴随反复碰撞/卡住/纠偏”的解释；threading 的曲线显示接触建立后均值与方差长期维持在较高水平，反映其“稀疏接触但事件强、可复现性差”的特征。该图的核心意义是把图 5 的“高频能量”落回可解释的时序形态：你看到的不是“力越大越好/越坏”，而是接触建立瞬间的冲击与抖动模式。
+   **补充（窗口数量）**：由于该图要求事件两侧 `±10` 步窗口完整，事件靠近轨迹起止处会被丢弃，因此实际用于统计的窗口数量略小于事件数：coffee `4902/1035`、square `4601/1098`、threading `1012/750`（success/fail）。
+
+**Figure X: Contact Artifact Analysis（论文配图描述，可直接使用）**
+**(Left) Contact-Aligned Force Profile：**展示接触发生瞬间的力均值与标准差（阴影）。
+**观察：**接触瞬间伴随明显过冲（Overshoot）与震荡，呈典型 Sim Force Artifacts。
+**(Right) High-Frequency Energy Distribution：**箱线图显示 success 与 failure 的高频能量（Diff^2）在接触主导任务（如 square）中高度重叠。
+**结论：**即便仅保留“发生接触”的轨迹，高频震荡仍非失败特征，而是仿真器/控制器的系统性伪影。
 
 **LaTeX Caption 建议：**
+
 ```latex
 \textbf{Fig. 1: Analysis of Reactive Force Artifacts in Simulation.}
 \textbf{(Left)} The ensemble average of contact forces aligned at the onset of contact. The shaded region indicates $\pm 1\sigma$ and reveals high-frequency oscillations and transient spikes characteristic of stiff simulation controllers fighting geometric interpenetration.
 \textbf{(Right)} Distribution of High-Frequency (HF) Energy across trajectories (contact-only). The substantial overlap between successful and failed episodes indicates that force jitter is a simulator artifact rather than a discriminative feature of task performance.
 ```
+
 7. Force 时序示例（成功 vs 失败，各任务各 1 条）
    ![Phase 1 Force Time Series](artifacts/2026-02-04_phase1/phase1_force_timeseries_examples.png)
-   
-   **图 7 解读（结论紧跟图）**  
-   **一句话证明**：力时序的尖峰与瞬态形态在任务间显著不同，且可直观看到统计指标背后的“反应式伪影”模式。  
-   **指标/定义**：展示每任务各取一条 success 与一条 failed（示例为 `demo_0`）的 `Force_adj` 时序；水平虚线为接触阈值 `5N`。  
-   **读图要点**：关注三个形状：  
-   (1) 长时间接近 0 的“无交互段”；(2) 超阈值的“接触段”；(3) 接触建立/解除处的尖峰与高频抖动。  
-   **结论（定性）**：coffee 在中后段出现一簇接触峰，failed 更“持续/更高”并夹杂额外峰值；square 出现数十到上百 N 的尖峰，failed 的峰值更夸张，典型地像“硬接触+纠偏+求解器瞬态”；threading 大部分时间几乎为 0，但会出现极窄的瞬时尖峰（接触稀疏但冲击强）。这些形态直观支持图 2/图 5 的结论：Sim‑Force 包含大量反应式高频/瞬态成分，且其与 success/fail 并不一一对应。  
+
+   **图 7 解读（结论紧跟图）**
+   **一句话证明**：力时序的尖峰与瞬态形态在任务间显著不同，且可直观看到统计指标背后的“反应式伪影”模式。
+   **指标/定义**：展示每任务各取一条 success 与一条 failed（示例为 `demo_0`）的 `Force_adj` 时序；水平虚线为接触阈值 `5N`。
+   **读图要点**：关注三个形状：
+   (1) 长时间接近 0 的“无交互段”；(2) 超阈值的“接触段”；(3) 接触建立/解除处的尖峰与高频抖动。
+   **结论（定性）**：coffee 在中后段出现一簇接触峰，failed 更“持续/更高”并夹杂额外峰值；square 出现数十到上百 N 的尖峰，failed 的峰值更夸张，典型地像“硬接触+纠偏+求解器瞬态”；threading 大部分时间几乎为 0，但会出现极窄的瞬时尖峰（接触稀疏但冲击强）。这些形态直观支持图 2/图 5 的结论：Sim‑Force 包含大量反应式高频/瞬态成分，且其与 success/fail 并不一一对应。
 
 产出汇总表（含均值统计）：`artifacts/2026-02-04_phase1/phase1_summary.json`。
 
@@ -345,7 +316,7 @@ python scripts/run_phase2_train_sweep.py \
 # 3) rollout sanity（full-mask 推理）
 python scripts/eval_dit_rollout.py \
   --task threading \
-  --ckpt data/checkpoints_threading/n200_spine_refine/seed0/spine_dit_ep200.pth \
+  --ckpt data/checkpoints_threading_rgb_inpaint/n200_spine_refine/seed0/spine_dit_ep200.pth \
   --episodes 5 \
   --horizon 200 \
   --sample-steps 20 \

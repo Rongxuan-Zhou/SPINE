@@ -25,6 +25,15 @@ Author tests with `pytest` plus `pytest-asyncio` for ROS interfaces, placing fix
 
 Adopt an imperative short style: `area: action` (e.g., `control: enforce joint torque clamps`). Each PR should reference its issue, describe perception/planning/control changes, attach experiment IDs, and include screenshots or plots for policy metrics. Confirm `make lint`, `pytest`, and any `ros2 launch` smoke tests in the PR checklist, and keep commits narrowly scoped for easier bisection.
 
+## Conversation-End Automation Policy
+
+After each user-assistant conversation turn is completed:
+
+- If any file was modified, the agent must run `git add -A`, create a commit, and push to the **current branch**.
+- Commit messages must be written in **English**.
+- Use concise imperative commit style and keep the message aligned with the actual change scope.
+- If push fails (e.g., network/auth), the agent must keep the local commit and report the failure reason with the exact failed command.
+
 ## Simulation & Safety Notes
 
 Keep separate launch files for simulation (`sim.launch.py`) and hardware (`robot.launch.py`) with explicit emergency-stop topics and torque limits. Never push configs with live robot credentials; load them from `.env.local` via `python-dotenv`. When adding new planners or controllers, state assumptions about contact models and sampling rates directly in comments so downstream agents can evaluate risk quickly.
